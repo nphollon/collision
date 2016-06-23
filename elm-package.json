@@ -1,0 +1,16 @@
+{
+    "version": "1.0.0",
+    "summary": "3D collision detection using OBBTree algorithm",
+    "repository": "https://github.com/nphollon/collision",
+    "license": "MIT",
+    "source-directories": [
+        "src"
+    ],
+    "exposed-modules": [
+        "Collision"
+    ],
+    "dependencies": {
+        "elm-lang/core": "4.0.1 <= v < 5.0.0"
+    },
+    "elm-version": "0.17.0 <= v < 0.18.0"
+}
