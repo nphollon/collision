@@ -3,10 +3,10 @@ module BoundingBox exposing (Body, BoundingBox, boxCollide, collide, boxCreate, 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
 import Vector exposing (Vector)
+import Quaternion exposing (Quaternion)
 import Tree exposing (Tree(..))
 import Transform
 import Hull
-import Matrix
 import Face exposing (Face)
 import Covariance exposing (Covariance)
 
@@ -16,7 +16,7 @@ type alias BoundingBox =
     , b : Float
     , c : Float
     , position : Vector
-    , orientation : Vector
+    , orientation : Quaternion
     }
 
 
@@ -29,13 +29,21 @@ encode box =
                 , Encode.float (Vector.getY v)
                 , Encode.float (Vector.getZ v)
                 ]
+
+        encodeQuaternion q =
+            Encode.list
+                [ Encode.float q.scalar
+                , Encode.float (Vector.getX q.vector)
+                , Encode.float (Vector.getY q.vector)
+                , Encode.float (Vector.getZ q.vector)
+                ]
     in
         Encode.object
             [ ( "a", Encode.float box.a )
             , ( "b", Encode.float box.b )
             , ( "c", Encode.float box.c )
             , ( "position", encodeVector box.position )
-            , ( "orientation", encodeVector box.orientation )
+            , ( "orientation", encodeQuaternion box.orientation )
             ]
 
 
@@ -51,19 +59,29 @@ decode =
             }
 
         decodeVector =
-            Decode.tuple3 Vector.vector Decode.float Decode.float Decode.float
+            Decode.tuple3 Vector.vector
+                Decode.float
+                Decode.float
+                Decode.float
+
+        decodeQuaternion =
+            Decode.tuple4 Quaternion.quaternion
+                Decode.float
+                Decode.float
+                Decode.float
+                Decode.float
     in
         (Decode.object5 construct) ("a" := Decode.float)
             ("b" := Decode.float)
             ("c" := Decode.float)
             ("position" := decodeVector)
-            ("orientation" := decodeVector)
+            ("orientation" := decodeQuaternion)
 
 
 type alias Body a =
     { a
         | position : Vector
-        , orientation : Vector
+        , orientation : Quaternion
     }
 
 
@@ -73,7 +91,7 @@ collide bodyA boxTreeA bodyB boxTreeB =
         add { position, orientation } addend =
             { addend
                 | position = Vector.add position addend.position
-                , orientation = Transform.mulOrient orientation addend.orientation
+                , orientation = Quaternion.compose addend.orientation orientation
             }
 
         condition boxA boxB =
@@ -87,20 +105,19 @@ boxCollide boxA boxB =
     let
         t =
             Transform.toBodyFrame boxB.position boxA
-                |> Vector.toRecord
 
         rotation =
-            Transform.mulOrient (Vector.negate boxA.orientation) boxB.orientation
-                |> Matrix.makeRotate
+            Quaternion.conjugate boxA.orientation
+                |> Quaternion.compose boxB.orientation
 
         r1 =
-            Matrix.transform rotation (Vector.vector 1 0 0)
+            Quaternion.rotateVector rotation (Vector.vector 1 0 0)
 
         r2 =
-            Matrix.transform rotation (Vector.vector 0 1 0)
+            Quaternion.rotateVector rotation (Vector.vector 0 1 0)
 
         r3 =
-            Matrix.transform rotation (Vector.vector 0 0 1)
+            Quaternion.rotateVector rotation (Vector.vector 0 0 1)
 
         r =
             { a11 = abs (Vector.getX r1)
@@ -246,7 +263,7 @@ partitionFaces : BoundingBox -> List Face -> Maybe ( List Face, List Face )
 partitionFaces box faces =
     let
         transform =
-            Transform.rotate box.orientation
+            Quaternion.rotateVector box.orientation
 
         basis =
             [ ( box.a, Vector.vector 1 0 0 )
@@ -370,8 +387,8 @@ boxCreate faces =
                 |> Covariance.eigenbasis
 
         orientation =
-            Transform.basisToOrientation basis
-                |> Vector.negate
+            Quaternion.fromBasis basis
+                |> Quaternion.conjugate
 
         xProj =
             projectOnto basis.x hullPoints
@@ -387,7 +404,7 @@ boxCreate faces =
         , c = zProj.radius
         , position =
             Vector.vector xProj.center yProj.center zProj.center
-                |> Transform.rotate orientation
+                |> Quaternion.rotateVector orientation
         , orientation = orientation
         }
 

@@ -3,6 +3,7 @@ module BoundingBoxTest exposing (testSuite)
 import ElmTest exposing (..)
 import Json.Decode as Decode
 import Vector exposing (Vector)
+import Quaternion exposing (Quaternion)
 import Tree exposing (Tree(..))
 import Face as Face
 import BoundingBox as BoundingBox exposing (BoundingBox, Body)
@@ -92,7 +93,7 @@ boxA =
     , b = 2
     , c = 1
     , position = Vector.vector 0 0 0
-    , orientation = Vector.vector 0 0 0
+    , orientation = Quaternion.fromVector (Vector.vector 0 0 0)
     }
 
 
@@ -106,7 +107,7 @@ boxB =
         , b = 2
         , c = 1
         , position = Vector.vector 0 0 0
-        , orientation = Vector.vector comp comp comp
+        , orientation = Quaternion.fromVector (Vector.vector comp comp comp)
         }
 
 
@@ -145,21 +146,21 @@ bodySuite =
                 <| assertHit
                     { defaultBody
                         | position = Vector.vector 0 0 -2
-                        , orientation = Vector.vector (degrees -36.9) 0 0
+                        , orientation = Quaternion.fromVector (Vector.vector (degrees -36.9) 0 0)
                     }
                     { defaultBody
                         | position = Vector.vector 0 0 2
-                        , orientation = Vector.vector 0 (degrees 20.8) 0
+                        , orientation = Quaternion.fromVector (Vector.vector 0 (degrees 20.8) 0)
                     }
             , test "unaligned bodies that do not collide"
                 <| assertMiss
                     { defaultBody
                         | position = Vector.vector 0 0 -2
-                        , orientation = Vector.vector (degrees -36.8) 0 0
+                        , orientation = Quaternion.fromVector (Vector.vector (degrees -36.8) 0 0)
                     }
                     { defaultBody
                         | position = Vector.vector 0 0 2
-                        , orientation = Vector.vector 0 (degrees 20.7) 0
+                        , orientation = Quaternion.fromVector (Vector.vector 0 (degrees 20.7) 0)
                     }
             ]
 
@@ -310,7 +311,7 @@ jsonSuite =
             , b = 2.5
             , c = 3.5
             , position = Vector.vector -1 -2 -3
-            , orientation = Vector.vector 0.4 0.6 0
+            , orientation = Quaternion.fromVector (Vector.vector 0.4 0.6 0)
             }
     in
         test "Json encoding & decoding"
@@ -321,5 +322,5 @@ jsonSuite =
 defaultBody : Body {}
 defaultBody =
     { position = Vector.vector 0 0 0
-    , orientation = Vector.vector 0 0 0
+    , orientation = Quaternion.fromVector (Vector.vector 0 0 0)
     }

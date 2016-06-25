@@ -4,7 +4,7 @@ import ElmTest exposing (..)
 import TreeTest
 import BoundingBoxTest
 import CovarianceTest
-import TransformTest
+import QuaternionTest
 
 
 testSuite : Test
@@ -13,7 +13,7 @@ testSuite =
         [ TreeTest.testSuite
         , BoundingBoxTest.testSuite
         , CovarianceTest.testSuite
-        , TransformTest.testSuite
+        , QuaternionTest.testSuite
         ]
 
 

@@ -1,11 +1,8 @@
-module Collision exposing (Body, Bounds, Vector, Face, collide, create, encode, decode)
+module Collision exposing (Body, Bounds, collide, create, encode, decode)
 
 {-| Detect collisions between three-dimensional objects.
 
 This module will not work for 2D objects! Even if you add a dummy z-coordinate to your vertex data.
-
-# Geometric Types
-@docs Vector, Face
 
 # Creating Bounds
 @docs Bounds, create
@@ -21,20 +18,9 @@ import Json.Encode exposing (Value)
 import Json.Decode exposing (Decoder)
 import BoundingBox exposing (BoundingBox)
 import Tree exposing (Tree)
-import Vector
-import Face
-
-
-{-| Three dimensional vector type
--}
-type alias Vector =
-    Vector.Vector
-
-
-{-| A face is a triangle. Its vertexes are at points P, Q, and R. Vertexes can be in any order.
--}
-type alias Face =
-    Face.Face
+import Vector exposing (Vector)
+import Quaternion exposing (Quaternion)
+import Face exposing (Face)
 
 
 {-| The boundary data for an object, stored as an OBBTree.
@@ -44,13 +30,11 @@ type alias Bounds =
 
 
 {-| An object in three-dimensional space. When testing for collisions, the bounds are repositioned to the given position and orientation.
-
-TODO: A better rotation formalism.
 -}
 type alias Body a =
     { a
         | position : Vector
-        , orientation : Vector
+        , orientation : Quaternion
         , bounds : Bounds
     }
 
