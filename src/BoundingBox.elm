@@ -85,7 +85,7 @@ type alias Body a =
     }
 
 
-collide : Body b -> Tree BoundingBox -> Body b' -> Tree BoundingBox -> Bool
+collide : Body b -> Tree BoundingBox BoundingBox -> Body b' -> Tree BoundingBox BoundingBox -> Bool
 collide bodyA boxTreeA bodyB boxTreeB =
     let
         add { position, orientation } addend =
@@ -97,7 +97,7 @@ collide bodyA boxTreeA bodyB boxTreeB =
         condition boxA boxB =
             boxCollide (add bodyA boxA) (add bodyB boxB)
     in
-        Tree.satisfies condition boxTreeA boxTreeB
+        Tree.satisfies condition condition condition boxTreeA boxTreeB
 
 
 boxCollide : BoundingBox -> BoundingBox -> Bool
@@ -241,7 +241,7 @@ getFacts face =
         }
 
 
-create : Int -> List Face -> Tree BoundingBox
+create : Int -> List Face -> Tree BoundingBox BoundingBox
 create iter faces =
     let
         bb =

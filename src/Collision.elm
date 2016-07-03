@@ -26,7 +26,7 @@ import Face exposing (Face)
 {-| The boundary data for an object, stored as an OBBTree.
 -}
 type alias Bounds =
-    Tree BoundingBox
+    Tree BoundingBox BoundingBox
 
 
 {-| An object in three-dimensional space. When testing for collisions, the bounds are repositioned to the given position and orientation.
@@ -52,8 +52,6 @@ create =
 
 
 {-| Determine whether two bodies collide.
-
-TODO: Triangle collisions
 -}
 collide : Body b -> Body b' -> Bool
 collide a b =
@@ -64,11 +62,11 @@ collide a b =
 -}
 encode : Bounds -> Value
 encode =
-    Tree.encode BoundingBox.encode
+    Tree.encode BoundingBox.encode BoundingBox.encode
 
 
 {-| A JSON decoder for an OBBTree encoded with the above function.
 -}
 decode : Decoder Bounds
 decode =
-    Tree.decode BoundingBox.decode
+    Tree.decode BoundingBox.decode BoundingBox.decode

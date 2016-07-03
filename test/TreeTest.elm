@@ -19,10 +19,10 @@ satisfiesSuite : Test
 satisfiesSuite =
     let
         assertSatisfy a b =
-            assertEqual True (Tree.satisfies (==) a b)
+            assertEqual True (Tree.satisfies (==) (==) (flip List.member) a b)
 
         assertMiss a b =
-            assertEqual False (Tree.satisfies (==) a b)
+            assertEqual False (Tree.satisfies (==) (==) (flip List.member) a b)
     in
         suite "recursive condition checking"
             [ test "non-colliding leafs do not collide"
@@ -33,46 +33,46 @@ satisfiesSuite =
                     (Leaf 1)
             , test "false if leaf collides with node but not children"
                 <| assertMiss (Leaf 1)
-                    (Node 1 (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 2) (Leaf 3))
             , test "true if leaf collides with node and the first child"
                 <| assertSatisfy (Leaf 1)
-                    (Node 1 (Leaf 1) (Leaf 3))
+                    (Node [ 1 ] (Leaf 1) (Leaf 3))
             , test "true if leaf collides with node and the second child"
                 <| assertSatisfy (Leaf 1)
-                    (Node 1 (Leaf 3) (Leaf 1))
+                    (Node [ 1 ] (Leaf 3) (Leaf 1))
             , test "false if leaf collides with children but not node"
                 <| assertMiss (Leaf 1)
-                    (Node 2 (Leaf 1) (Leaf 2))
+                    (Node [ 2 ] (Leaf 1) (Leaf 2))
             , test "false if node but not children collide with leaf"
-                <| assertMiss (Node 1 (Leaf 2) (Leaf 3))
+                <| assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
                     (Leaf 1)
             , test "true if node and first child collide with leaf"
-                <| assertSatisfy (Node 1 (Leaf 1) (Leaf 3))
+                <| assertSatisfy (Node [ 1 ] (Leaf 1) (Leaf 3))
                     (Leaf 1)
             , test "true if node and second child collide with leaf"
-                <| assertSatisfy (Node 1 (Leaf 3) (Leaf 1))
+                <| assertSatisfy (Node [ 1 ] (Leaf 3) (Leaf 1))
                     (Leaf 1)
             , test "false if children but not node collide with leaf"
-                <| assertMiss (Node 2 (Leaf 1) (Leaf 3))
+                <| assertMiss (Node [ 2 ] (Leaf 1) (Leaf 3))
                     (Leaf 1)
             , test "false if nodes but no children collide"
-                <| assertMiss (Node 1 (Leaf 2) (Leaf 3))
-                    (Node 1 (Leaf 4) (Leaf 5))
+                <| assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 4) (Leaf 5))
             , test "false if children but not nodes collide"
-                <| assertMiss (Node 1 (Leaf 2) (Leaf 3))
-                    (Node 4 (Leaf 2) (Leaf 3))
+                <| assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 4 ] (Leaf 2) (Leaf 3))
             , test "true if first children collide"
-                <| assertSatisfy (Node 1 (Leaf 2) (Leaf 3))
-                    (Node 1 (Leaf 2) (Leaf 4))
+                <| assertSatisfy (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 2) (Leaf 4))
             , test "true if first child collides with second child"
-                <| assertSatisfy (Node 1 (Leaf 2) (Leaf 3))
-                    (Node 1 (Leaf 4) (Leaf 2))
+                <| assertSatisfy (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 4) (Leaf 2))
             , test "true if second child collides with first child"
-                <| assertSatisfy (Node 1 (Leaf 2) (Leaf 3))
-                    (Node 1 (Leaf 3) (Leaf 4))
+                <| assertSatisfy (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 3) (Leaf 4))
             , test "true if second children collide"
-                <| assertSatisfy (Node 1 (Leaf 2) (Leaf 3))
-                    (Node 1 (Leaf 4) (Leaf 3))
+                <| assertSatisfy (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 4) (Leaf 3))
             ]
 
 
@@ -96,13 +96,13 @@ jsonSuite =
     let
         assertLosslessJson tree =
             assertEqual (Ok tree)
-                (Decode.decodeValue (Tree.decode Decode.int)
-                    (Tree.encode Encode.int tree)
+                (Decode.decodeValue (Tree.decode Decode.string Decode.int)
+                    (Tree.encode Encode.string Encode.int tree)
                 )
     in
         suite "encoding and decoding json"
             [ test "leaf encodes and decodes again without losing data"
                 <| assertLosslessJson (Leaf 5)
             , test "node encodes and decodes again without losing data"
-                <| assertLosslessJson (Node 1 (Leaf 2) (Leaf 3))
+                <| assertLosslessJson (Node "hello" (Leaf 2) (Leaf 3))
             ]
