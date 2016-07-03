@@ -7,3 +7,4 @@ test/run.sh
 if [ $? -ne 0 ]; then exit 1; fi;
 
 elm make --yes --warn src/Collision.elm
+elm make --docs=documentation.json

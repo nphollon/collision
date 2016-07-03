@@ -1,8 +1,19 @@
-module Collision exposing (Body, Bounds, collide, create, encode, decode)
+module Collision exposing (Body, Bounds, Face, Vector, Quaternion, face, vector, quaternion, collide, create, encode, decode)
 
-{-| Detect collisions between three-dimensional objects.
+{-| Detect collisions between rigid three-dimensional objects. The process goes like this:
 
-This module will not work for 2D objects! Even if you add a dummy z-coordinate to your vertex data.
+1. Start with a set of triangular faces that describe the shape of an object.
+
+2. Use `create` to convert the list of faces into a `Bounds` value. Creating the bounds can be time-consuming, so you will want to do this before you start the time loop.
+
+3. If you want to create your bounds ahead of time, you can `encode` them to JSON and `decode` them later.
+
+4. Once your simulation/game is running, test for collisions using `collide`.
+
+This module will not work for 2D objects.
+
+# Geometry
+@docs Vector, vector, Quaternion, quaternion, Face, face
 
 # Creating Bounds
 @docs Bounds, create
@@ -17,7 +28,48 @@ This module will not work for 2D objects! Even if you add a dummy z-coordinate t
 import Json.Encode exposing (Value)
 import Json.Decode exposing (Decoder)
 import OBBTree
-import Face exposing (Face)
+import Face
+import Vector
+import Quaternion
+
+
+{-| Stores a three-dimensional position.
+-}
+type alias Vector =
+    Vector.Vector
+
+
+{-| Create a vector from x, y, and z coordinates.
+-}
+vector : Float -> Float -> Float -> Vector
+vector =
+    Vector.vector
+
+
+{-| Stores a three-dimensional rotation.
+-}
+type alias Quaternion =
+    Quaternion.Quaternion
+
+
+{-| Create a quaternion from w, x, y, and z coordinates.
+-}
+quaternion : Float -> Float -> Float -> Float -> Quaternion
+quaternion =
+    Quaternion.quaternion
+
+
+{-| A triangle. The surface of your colliding objects is described by a collection of triangular faces.
+-}
+type alias Face =
+    Face.Face
+
+
+{-| Create a triangular face, given the positions of its three vertexes. The vertexes can be given in any order.
+-}
+face : Vector -> Vector -> Vector -> Face
+face =
+    Face.face
 
 
 {-| The boundary data for an object, stored as an OBBTree.
@@ -26,17 +78,21 @@ type alias Bounds =
     OBBTree.OBBTree
 
 
-{-| An object in three-dimensional space. When testing for collisions, the bounds are repositioned to the given position and orientation.
+{-| An object that is positioned and oriented in three-dimensional space. The bounds of the object are given in the body's reference frame. Before testing for a collision, we use the position and orientation to move the bounds into the world's reference frame.
+
+This way, we can move our objects through the world, but we don't have to re-compute the bounds (as long as the object does not change shape).
 -}
 type alias Body a =
-    OBBTree.Body a
+    { a
+        | position : Vector
+        , orientation : Quaternion
+        , bounds : Maybe Bounds
+    }
 
 
 {-| Generate the OBBTree for a surface. The list of faces defines the surface. If the list is empty, the function returns Nothing.
 
 The overall time to build the OBBTree is O(n log^2 n), where n is the number of faces.
-
-Bug: Failing to partition faces
 -}
 create : List Face -> Maybe Bounds
 create =
