@@ -1,4 +1,4 @@
-module Collision exposing (Body, Bounds, Face, Vector, Quaternion, face, vector, quaternion, collide, create, encode, decode)
+module Collision exposing (Body, Bounds, Face, Vector, Quaternion, face, vector, quaternion, axisAngleRotation, collide, create, encode, decode)
 
 {-| Detect collisions between rigid three-dimensional objects. The process goes like this:
 
@@ -13,7 +13,7 @@ module Collision exposing (Body, Bounds, Face, Vector, Quaternion, face, vector,
 This module will not work for 2D objects.
 
 # Geometry
-@docs Vector, vector, Quaternion, quaternion, Face, face
+@docs Vector, vector, Quaternion, quaternion, axisAngleRotation, Face, face
 
 # Creating Bounds
 @docs Bounds, create
@@ -57,6 +57,13 @@ type alias Quaternion =
 quaternion : Float -> Float -> Float -> Float -> Quaternion
 quaternion =
     Quaternion.quaternion
+
+
+{-| Given an axis to rotate around and an angle of rotation, create a quaternion.
+-}
+axisAngleRotation : Vector -> Float -> Quaternion
+axisAngleRotation =
+    Quaternion.fromAxisAngle
 
 
 {-| A triangle. The surface of your colliding objects is described by a collection of triangular faces.

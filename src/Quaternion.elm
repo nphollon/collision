@@ -1,4 +1,4 @@
-module Quaternion exposing (Quaternion, toVector, fromVector, fromBasis, compose, rotateVector, quaternion, conjugate, encode, decode)
+module Quaternion exposing (Quaternion, toVector, fromVector, fromBasis, fromAxisAngle, compose, rotateVector, quaternion, conjugate, encode, decode)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
@@ -79,9 +79,14 @@ fromVector v =
             , scalar = 1
             }
         else
-            { vector = Vector.scale (sin (0.5 * angle) / angle) v
-            , scalar = cos (0.5 * angle)
-            }
+            fromAxisAngle v angle
+
+
+fromAxisAngle : Vector -> Float -> Quaternion
+fromAxisAngle axis angle =
+    { vector = Vector.scale (sin (0.5 * angle)) (Vector.normalize axis)
+    , scalar = cos (0.5 * angle)
+    }
 
 
 toVector : Quaternion -> Vector
