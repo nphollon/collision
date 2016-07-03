@@ -1,5 +1,7 @@
-module Face exposing (Face, face, vertexList, vertexTuple, cross, collide)
+module Face exposing (Face, face, vertexList, vertexTuple, cross, collide, encode, decode)
 
+import Json.Encode as Encode exposing (Value)
+import Json.Decode as Decode exposing (Decoder, (:=))
 import Vector exposing (Vector)
 
 
@@ -16,6 +18,23 @@ face p q r =
     , q = q
     , r = r
     }
+
+
+encode : Face -> Value
+encode face =
+    Encode.object
+        [ ( "p", Vector.encode face.p )
+        , ( "q", Vector.encode face.q )
+        , ( "r", Vector.encode face.r )
+        ]
+
+
+decode : Decoder Face
+decode =
+    Decode.object3 face
+        ("p" := Vector.decode)
+        ("q" := Vector.decode)
+        ("r" := Vector.decode)
 
 
 vertexList : Face -> List Vector

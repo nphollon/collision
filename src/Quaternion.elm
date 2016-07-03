@@ -1,5 +1,7 @@
-module Quaternion exposing (Quaternion, toVector, fromVector, fromBasis, compose, rotateVector, quaternion, conjugate)
+module Quaternion exposing (Quaternion, toVector, fromVector, fromBasis, compose, rotateVector, quaternion, conjugate, encode, decode)
 
+import Json.Encode as Encode exposing (Value)
+import Json.Decode as Decode exposing (Decoder)
 import Vector exposing (Vector)
 
 
@@ -7,6 +9,25 @@ type alias Quaternion =
     { vector : Vector
     , scalar : Float
     }
+
+
+encode : Quaternion -> Value
+encode q =
+    Encode.list
+        [ Encode.float q.scalar
+        , Encode.float (Vector.getX q.vector)
+        , Encode.float (Vector.getY q.vector)
+        , Encode.float (Vector.getZ q.vector)
+        ]
+
+
+decode : Decoder Quaternion
+decode =
+    Decode.tuple4 quaternion
+        Decode.float
+        Decode.float
+        Decode.float
+        Decode.float
 
 
 quaternion : Float -> Float -> Float -> Float -> Quaternion

@@ -1,6 +1,8 @@
-module Vector exposing (Vector, vector, getX, getY, getZ, add, sub, negate, scale, dot, cross, normalize, direction, length, lengthSquared, distance, distanceSquared, equal, fromTuple, toTuple, unique)
+module Vector exposing (Vector, vector, getX, getY, getZ, add, sub, negate, scale, dot, cross, normalize, direction, length, lengthSquared, distance, distanceSquared, equal, fromTuple, toTuple, unique, encode, decode)
 
 import Set
+import Json.Encode as Encode exposing (Value)
+import Json.Decode as Decode exposing (Decoder)
 
 
 type alias Vector =
@@ -125,3 +127,17 @@ unique points =
         |> Set.fromList
         |> Set.toList
         |> List.map fromTuple
+
+
+encode : Vector -> Value
+encode v =
+    Encode.list
+        [ Encode.float (getX v)
+        , Encode.float (getY v)
+        , Encode.float (getZ v)
+        ]
+
+
+decode : Decoder Vector
+decode =
+    Decode.tuple3 vector Decode.float Decode.float Decode.float

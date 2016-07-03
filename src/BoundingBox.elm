@@ -22,29 +22,13 @@ type alias BoundingBox =
 
 encode : BoundingBox -> Value
 encode box =
-    let
-        encodeVector v =
-            Encode.list
-                [ Encode.float (Vector.getX v)
-                , Encode.float (Vector.getY v)
-                , Encode.float (Vector.getZ v)
-                ]
-
-        encodeQuaternion q =
-            Encode.list
-                [ Encode.float q.scalar
-                , Encode.float (Vector.getX q.vector)
-                , Encode.float (Vector.getY q.vector)
-                , Encode.float (Vector.getZ q.vector)
-                ]
-    in
-        Encode.object
-            [ ( "a", Encode.float box.a )
-            , ( "b", Encode.float box.b )
-            , ( "c", Encode.float box.c )
-            , ( "position", encodeVector box.position )
-            , ( "orientation", encodeQuaternion box.orientation )
-            ]
+    Encode.object
+        [ ( "a", Encode.float box.a )
+        , ( "b", Encode.float box.b )
+        , ( "c", Encode.float box.c )
+        , ( "position", Vector.encode box.position )
+        , ( "orientation", Quaternion.encode box.orientation )
+        ]
 
 
 decode : Decoder BoundingBox
@@ -57,25 +41,12 @@ decode =
             , position = position
             , orientation = orientation
             }
-
-        decodeVector =
-            Decode.tuple3 Vector.vector
-                Decode.float
-                Decode.float
-                Decode.float
-
-        decodeQuaternion =
-            Decode.tuple4 Quaternion.quaternion
-                Decode.float
-                Decode.float
-                Decode.float
-                Decode.float
     in
         (Decode.object5 construct) ("a" := Decode.float)
             ("b" := Decode.float)
             ("c" := Decode.float)
-            ("position" := decodeVector)
-            ("orientation" := decodeQuaternion)
+            ("position" := Vector.decode)
+            ("orientation" := Quaternion.decode)
 
 
 type alias Body a =

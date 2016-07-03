@@ -1,12 +1,21 @@
 module FaceTest exposing (..)
 
 import ElmTest exposing (..)
+import Json.Decode as Decode
 import Face exposing (Face)
 import Vector
 
 
 testSuite : Test
 testSuite =
+    suite "Triangular faces"
+        [ intersectionSuite
+        , jsonSuite
+        ]
+
+
+intersectionSuite : Test
+intersectionSuite =
     let
         stationaryTriangle =
             { p = Vector.vector -1 0 0
@@ -86,3 +95,17 @@ testBPermutations name shouldIntersect a b =
             , subTest "B: q p r" { p = b.q, q = b.p, r = b.r }
             , subTest "B: p r q" { p = b.p, q = b.r, r = b.q }
             ]
+
+
+jsonSuite : Test
+jsonSuite =
+    let
+        face =
+            { p = Vector.vector 10 11 12
+            , q = Vector.vector 9 8 7
+            , r = Vector.vector -1 0 1
+            }
+    in
+        test "Json encoding & decoding"
+            <| assertEqual (Ok face)
+                (Decode.decodeValue Face.decode (Face.encode face))
