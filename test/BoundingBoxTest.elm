@@ -10,13 +10,14 @@ import BoundingBox as BoundingBox exposing (BoundingBox)
 testSuite : Test
 testSuite =
     suite "Collision detection"
-        [ collideSuite
+        [ collideWithBoxSuite
+        , collideWithFaceSuite
         , jsonSuite
         ]
 
 
-collideSuite : Test
-collideSuite =
+collideWithBoxSuite : Test
+collideWithBoxSuite =
     let
         assertCollide v =
             (assertEqual True) (BoundingBox.collide boxA { boxB | position = v })
@@ -24,7 +25,7 @@ collideSuite =
         assertMiss v =
             (assertEqual False) (BoundingBox.collide boxA { boxB | position = v })
     in
-        suite "Oriented bounding box primitives"
+        suite "Collsion between oriented bounding boxes"
             [ test "concentric boxes collide"
                 <| assertCollide (Vector.vector 0 0 0)
             , suite "no collision on face axis projections"
@@ -63,23 +64,68 @@ collideSuite =
                 ]
             , suite "Moving box A"
                 [ test "collision with box A translated"
-                    <| (assertEqual True)
+                    <| assertEqual True
                         (BoundingBox.collide { boxA | position = Vector.vector 0.2 0.2 0.2 }
                             { boxB | position = Vector.vector 5 4 2.2 }
                         )
                 , test "collision with box A rotated"
-                    <| (assertEqual True)
+                    <| assertEqual True
                         (BoundingBox.collide boxB
                             { boxA | position = Vector.vector 0 4 2.2 }
                         )
                 ]
             , suite "degenerate cases"
                 [ test "collision when boxes are aligned"
-                    <| (assertEqual True)
+                    <| assertEqual True
                         (BoundingBox.collide { boxA | position = Vector.vector 0 1 0 }
                             { boxA | position = Vector.vector 0 -1 0 }
                         )
                 ]
+            ]
+
+
+collideWithFaceSuite : Test
+collideWithFaceSuite =
+    let
+        collideWithFace =
+            BoundingBox.collideWithFace
+                { p = Vector.vector -2.9 -1.9 -0.9
+                , q = Vector.vector 2.9 1.9 0.9
+                , r = Vector.vector 2.9 1.9 -0.9
+                }
+    in
+        suite "Collision between oriented bounding box and triangular face"
+            [ test "no collision when box encloses triangle"
+                <| assertEqual False
+                    (collideWithFace boxA)
+            , test "collision with +A box face"
+                <| assertEqual True
+                    (collideWithFace { boxA | position = Vector.vector -0.2 0 0 })
+            , test "collision with -A box face"
+                <| assertEqual True
+                    (collideWithFace { boxA | position = Vector.vector 0.2 0 0 })
+            , test "collision with +B box face"
+                <| assertEqual True
+                    (collideWithFace { boxA | position = Vector.vector 0 -0.2 0 })
+            , test "collision with -B box face"
+                <| assertEqual True
+                    (collideWithFace { boxA | position = Vector.vector 0 0.2 0 })
+            , test "collision with +C box face"
+                <| assertEqual True
+                    (collideWithFace { boxA | position = Vector.vector 0 0 -0.2 })
+            , test "collision with -C box face"
+                <| assertEqual True
+                    (collideWithFace { boxA | position = Vector.vector 0 0 0.2 })
+            , test "collision with rotated box"
+                <| assertEqual True
+                    (collideWithFace
+                        { boxA
+                            | orientation = Quaternion.fromVector (Vector.vector (turns 0.25) 0 0)
+                        }
+                    )
+            , test "no collision when box away from triangle"
+                <| assertEqual False
+                    (collideWithFace { boxA | position = Vector.vector 3.1 -2 0 })
             ]
 
 

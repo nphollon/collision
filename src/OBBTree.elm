@@ -4,6 +4,7 @@ import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
 import Tree exposing (Tree(..))
 import BoundingBox exposing (BoundingBox)
+import Transform
 import Face exposing (Face, FaceFacts)
 import Quaternion exposing (Quaternion)
 import Vector exposing (Vector)
@@ -11,13 +12,6 @@ import Vector exposing (Vector)
 
 type alias OBBTree =
     Tree BoundingBox BoundingBox
-
-
-type alias Orientable a =
-    { a
-        | position : Vector
-        , orientation : Quaternion
-    }
 
 
 type alias Body a =
@@ -42,20 +36,13 @@ collide : Body a -> Body b -> Bool
 collide bodyA bodyB =
     let
         condition boxA boxB =
-            BoundingBox.collide (add bodyA boxA) (add bodyB boxB)
+            BoundingBox.collide (Transform.add bodyA boxA)
+                (Transform.add bodyB boxB)
     in
         Maybe.map2 (Tree.satisfies condition condition condition)
             bodyA.bounds
             bodyB.bounds
             |> Maybe.withDefault False
-
-
-add : Orientable a -> Orientable b -> Orientable b
-add { position, orientation } addend =
-    { addend
-        | position = Vector.add position addend.position
-        , orientation = Quaternion.compose addend.orientation orientation
-    }
 
 
 create : Int -> List Face -> OBBTree

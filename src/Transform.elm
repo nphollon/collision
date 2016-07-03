@@ -1,10 +1,10 @@
-module Transform exposing (rotationFor, toBodyFrame, fromBodyFrame, degreesFromForward)
+module Transform exposing (Orientable, rotationFor, toBodyFrame, fromBodyFrame, degreesFromForward, add)
 
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
 
 
-type alias Body a =
+type alias Orientable a =
     { a
         | position : Vector
         , orientation : Quaternion
@@ -34,21 +34,29 @@ rotationFor u v =
                 |> Quaternion.fromVector
 
 
-toBodyFrame : Vector -> Body a -> Vector
-toBodyFrame point body =
+toBodyFrame : Orientable a -> Vector -> Vector
+toBodyFrame body point =
     Quaternion.rotateVector (Quaternion.conjugate body.orientation)
         (Vector.sub point body.position)
 
 
-fromBodyFrame : Vector -> Body a -> Vector
-fromBodyFrame point body =
+fromBodyFrame : Orientable a -> Vector -> Vector
+fromBodyFrame body point =
     Quaternion.rotateVector body.orientation point
         |> Vector.add body.position
 
 
-degreesFromForward : Vector -> Body a -> Float
-degreesFromForward point body =
-    toBodyFrame point body
+degreesFromForward : Orientable a -> Vector -> Float
+degreesFromForward body point =
+    toBodyFrame body point
         |> Vector.normalize
         |> Vector.dot (Vector.vector 0 0 -1)
         |> acos
+
+
+add : Orientable a -> Orientable b -> Orientable b
+add { position, orientation } addend =
+    { addend
+        | position = Vector.add position addend.position
+        , orientation = Quaternion.compose addend.orientation orientation
+    }

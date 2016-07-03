@@ -1,4 +1,4 @@
-module BoundingBox exposing (BoundingBox, collide, create, encode, decode)
+module BoundingBox exposing (BoundingBox, collide, collideWithFace, create, encode, decode)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
@@ -39,11 +39,62 @@ decode =
         ("orientation" := Quaternion.decode)
 
 
+collideWithFace : Face -> BoundingBox -> Bool
+collideWithFace face box =
+    let
+        transformedFace =
+            { p = Transform.toBodyFrame box face.p
+            , q = Transform.toBodyFrame box face.q
+            , r = Transform.toBodyFrame box face.r
+            }
+
+        ppp =
+            Vector.vector box.a box.b box.c
+
+        ppm =
+            Vector.vector box.a box.b -box.c
+
+        pmp =
+            Vector.vector box.a -box.b box.c
+
+        pmm =
+            Vector.vector box.a -box.b -box.c
+
+        mpp =
+            Vector.vector -box.a box.b box.c
+
+        mpm =
+            Vector.vector -box.a box.b -box.c
+
+        mmp =
+            Vector.vector -box.a -box.b box.c
+
+        mmm =
+            Vector.vector -box.a -box.b -box.c
+
+        faces =
+            [ Face.face ppp pmp pmm
+            , Face.face pmm ppm ppp
+            , Face.face mmm mmp mpp
+            , Face.face mpp mpm mmm
+            , Face.face ppp ppm mpm
+            , Face.face mpm mpp ppp
+            , Face.face mmm pmm pmp
+            , Face.face pmp mmp mmm
+            , Face.face ppp mpp mmp
+            , Face.face mmp pmp ppp
+            , Face.face mmm mpm ppm
+            , Face.face ppm pmm mmm
+            ]
+    in
+        List.any (Face.collide transformedFace) faces
+
+
 collide : BoundingBox -> BoundingBox -> Bool
 collide boxA boxB =
     let
         t =
-            Transform.toBodyFrame boxB.position boxA
+            Transform.toBodyFrame boxA boxB.position
 
         rotation =
             Quaternion.conjugate boxA.orientation
