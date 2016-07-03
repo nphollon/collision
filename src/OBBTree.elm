@@ -2,6 +2,7 @@ module OBBTree exposing (OBBTree, Body, collide, create, projectAndSplit, encode
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
+import List.Extra as ListX
 import Tree exposing (Tree(..))
 import BoundingBox exposing (BoundingBox)
 import Transform
@@ -70,18 +71,14 @@ create faces =
             let
                 bb =
                     BoundingBox.create faces
+
+                ( left, right ) =
+                    partitionFaces bb faces
             in
-                case partitionFaces bb faces of
-                    Nothing ->
-                        Nothing
-
-                    Just ( left, right ) ->
-                        Maybe.map2 (Node bb)
-                            (create left)
-                            (create right)
+                Maybe.map2 (Node bb) (create left) (create right)
 
 
-partitionFaces : BoundingBox -> List Face -> Maybe ( List Face, List Face )
+partitionFaces : BoundingBox -> List Face -> ( List Face, List Face )
 partitionFaces box faces =
     let
         transform =
@@ -103,6 +100,7 @@ partitionFaces box faces =
     in
         List.map Face.getFacts faces
             |> tryApply projections
+            |> Maybe.withDefault (simpleSplit faces)
 
 
 projectAndSplit : Vector -> List FaceFacts -> Maybe ( List Face, List Face )
@@ -173,3 +171,8 @@ tryApply maybes arg =
                 lastValue
     in
         List.foldl tryAgain Nothing maybes
+
+
+simpleSplit : List a -> ( List a, List a )
+simpleSplit whole =
+    ListX.splitAt (List.length whole // 2) whole
