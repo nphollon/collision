@@ -175,7 +175,7 @@ canonizeFaces dist ( a, b ) =
             ( rollToR a, swapQR b )
 
         ( EQ, EQ, EQ ) ->
-            Debug.crash "this is bad"
+            ( a, b )
 
 
 rollToR : Face -> Face

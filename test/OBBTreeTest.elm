@@ -6,7 +6,6 @@ import Quaternion exposing (Quaternion)
 import Tree exposing (Tree(..))
 import Face as Face
 import OBBTree exposing (Body)
-import BoundingBox as BoundingBox exposing (BoundingBox)
 
 
 testSuite : Test
@@ -21,7 +20,25 @@ collideSuite : Test
 collideSuite =
     let
         box =
-            Leaf boxA
+            Node
+                { a = 3
+                , b = 2
+                , c = 1
+                , position = Vector.vector 0 0 0
+                , orientation = Quaternion.fromVector (Vector.vector 0 0 0)
+                }
+                (Leaf
+                    { p = Vector.vector 3 2 1
+                    , q = Vector.vector -3 2 1
+                    , r = Vector.vector -3 -2 1
+                    }
+                )
+                (Leaf
+                    { p = Vector.vector 3 2 1
+                    , q = Vector.vector 3 2 -1
+                    , r = Vector.vector -3 2 1
+                    }
+                )
 
         assertHit a b =
             assertEqual True
@@ -51,12 +68,10 @@ collideSuite =
             , test "unaligned bodies that do collide"
                 <| assertHit
                     { defaultBody
-                        | position = Vector.vector 0 0 -2
-                        , orientation = Quaternion.fromVector (Vector.vector (degrees -36.9) 0 0)
+                        | orientation = Quaternion.fromVector (Vector.vector (degrees -36.9) 0 0)
                     }
                     { defaultBody
-                        | position = Vector.vector 0 0 2
-                        , orientation = Quaternion.fromVector (Vector.vector 0 (degrees 20.8) 0)
+                        | orientation = Quaternion.fromVector (Vector.vector 0 (degrees 20.8) 0)
                     }
             , test "unaligned bodies that do not collide"
                 <| assertMiss
@@ -215,27 +230,3 @@ defaultBody =
     , orientation = Quaternion.fromVector (Vector.vector 0 0 0)
     , bounds = Nothing
     }
-
-
-boxA : BoundingBox
-boxA =
-    { a = 3
-    , b = 2
-    , c = 1
-    , position = Vector.vector 0 0 0
-    , orientation = Quaternion.fromVector (Vector.vector 0 0 0)
-    }
-
-
-boxB : BoundingBox
-boxB =
-    let
-        comp =
-            pi / 6 / sqrt 3
-    in
-        { a = 3
-        , b = 2
-        , c = 1
-        , position = Vector.vector 0 0 0
-        , orientation = Quaternion.fromVector (Vector.vector comp comp comp)
-        }

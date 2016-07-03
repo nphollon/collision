@@ -1,5 +1,6 @@
-module Transform exposing (Orientable, rotationFor, toBodyFrame, fromBodyFrame, degreesFromForward, add)
+module Transform exposing (Orientable, rotationFor, toBodyFrame, fromBodyFrame, degreesFromForward, add, faceToBodyFrame, faceFromBodyFrame)
 
+import Face exposing (Face)
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
 
@@ -44,6 +45,22 @@ fromBodyFrame : Orientable a -> Vector -> Vector
 fromBodyFrame body point =
     Quaternion.rotateVector body.orientation point
         |> Vector.add body.position
+
+
+faceFromBodyFrame : Orientable a -> Face -> Face
+faceFromBodyFrame body face =
+    { p = fromBodyFrame body face.p
+    , q = fromBodyFrame body face.q
+    , r = fromBodyFrame body face.r
+    }
+
+
+faceToBodyFrame : Orientable a -> Face -> Face
+faceToBodyFrame body face =
+    { p = toBodyFrame body face.p
+    , q = toBodyFrame body face.q
+    , r = toBodyFrame body face.r
+    }
 
 
 degreesFromForward : Orientable a -> Vector -> Float

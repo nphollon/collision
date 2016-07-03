@@ -11,7 +11,7 @@ import Vector exposing (Vector)
 
 
 type alias OBBTree =
-    Tree BoundingBox BoundingBox
+    Tree BoundingBox Face
 
 
 type alias Body a =
@@ -24,43 +24,57 @@ type alias Body a =
 
 encode : OBBTree -> Value
 encode =
-    Tree.encode BoundingBox.encode BoundingBox.encode
+    Tree.encode BoundingBox.encode Face.encode
 
 
 decode : Decoder OBBTree
 decode =
-    Tree.decode BoundingBox.decode BoundingBox.decode
+    Tree.decode BoundingBox.decode Face.decode
 
 
 collide : Body a -> Body b -> Bool
 collide bodyA bodyB =
     let
-        condition boxA boxB =
+        boxCollide boxA boxB =
             BoundingBox.collide (Transform.add bodyA boxA)
                 (Transform.add bodyB boxB)
+
+        faceCollide faceA faceB =
+            Face.collide (Transform.faceFromBodyFrame bodyA faceA)
+                (Transform.faceFromBodyFrame bodyB faceB)
+
+        boxFaceCollide boxA faceB =
+            BoundingBox.collideWithFace (Transform.faceFromBodyFrame bodyB faceB)
+                (Transform.add bodyA boxA)
     in
-        Maybe.map2 (Tree.satisfies condition condition condition)
+        Maybe.map2 (Tree.satisfies boxCollide faceCollide boxFaceCollide)
             bodyA.bounds
             bodyB.bounds
             |> Maybe.withDefault False
 
 
-create : Int -> List Face -> OBBTree
-create iter faces =
-    let
-        bb =
-            BoundingBox.create faces
-    in
-        if iter <= 0 then
-            Leaf bb
-        else
-            case partitionFaces bb faces of
-                Nothing ->
-                    Leaf bb
+create : List Face -> Maybe OBBTree
+create faces =
+    case faces of
+        [] ->
+            Nothing
 
-                Just ( left, right ) ->
-                    (Node bb) (create (iter - 1) left)
-                        (create (iter - 1) right)
+        f :: [] ->
+            Just (Leaf f)
+
+        _ ->
+            let
+                bb =
+                    BoundingBox.create faces
+            in
+                case partitionFaces bb faces of
+                    Nothing ->
+                        Nothing
+
+                    Just ( left, right ) ->
+                        Maybe.map2 (Node bb)
+                            (create left)
+                            (create right)
 
 
 partitionFaces : BoundingBox -> List Face -> Maybe ( List Face, List Face )

@@ -32,14 +32,14 @@ type alias Body a =
     OBBTree.Body a
 
 
-{-| Generate the OBBTree for a surface. The list of faces defines the surface.
+{-| Generate the OBBTree for a surface. The list of faces defines the surface. If the list is empty, the function returns Nothing.
 
 The overall time to build the OBBTree is O(n log^2 n), where n is the number of faces.
 
-TODO: Get rid of int argument
-TODO: Fix behavior for single faces
+Bug: Failing to partition faces
+Bug: Box-face collision only works one way
 -}
-create : Int -> List Face -> Bounds
+create : List Face -> Maybe Bounds
 create =
     OBBTree.create
 

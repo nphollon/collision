@@ -43,10 +43,7 @@ collideWithFace : Face -> BoundingBox -> Bool
 collideWithFace face box =
     let
         transformedFace =
-            { p = Transform.toBodyFrame box face.p
-            , q = Transform.toBodyFrame box face.q
-            , r = Transform.toBodyFrame box face.r
-            }
+            Transform.faceToBodyFrame box face
 
         ppp =
             Vector.vector box.a box.b box.c
@@ -71,23 +68,21 @@ collideWithFace face box =
 
         mmm =
             Vector.vector -box.a -box.b -box.c
-
-        faces =
-            [ Face.face ppp pmp pmm
-            , Face.face pmm ppm ppp
-            , Face.face mmm mmp mpp
-            , Face.face mpp mpm mmm
-            , Face.face ppp ppm mpm
-            , Face.face mpm mpp ppp
-            , Face.face mmm pmm pmp
-            , Face.face pmp mmp mmm
-            , Face.face ppp mpp mmp
-            , Face.face mmp pmp ppp
-            , Face.face mmm mpm ppm
-            , Face.face ppm pmm mmm
-            ]
     in
-        List.any (Face.collide transformedFace) faces
+        [ Face.face ppp pmp pmm
+        , Face.face pmm ppm ppp
+        , Face.face mmm mmp mpp
+        , Face.face mpp mpm mmm
+        , Face.face ppp ppm mpm
+        , Face.face mpm mpp ppp
+        , Face.face mmm pmm pmp
+        , Face.face pmp mmp mmm
+        , Face.face ppp mpp mmp
+        , Face.face mmp pmp ppp
+        , Face.face mmm mpm ppm
+        , Face.face ppm pmm mmm
+        ]
+            |> List.any (Face.collide transformedFace)
 
 
 collide : BoundingBox -> BoundingBox -> Bool
