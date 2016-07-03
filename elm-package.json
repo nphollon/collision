@@ -2,7 +2,7 @@
     "version": "1.0.0",
     "summary": "3D collision detection using OBBTree algorithm",
     "repository": "https://github.com/nphollon/collision.git",
-    "license": "MIT",
+    "license": "Apache-2.0",
     "source-directories": [
         "src"
     ],
