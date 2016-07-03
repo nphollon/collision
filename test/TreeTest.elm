@@ -19,10 +19,10 @@ satisfiesSuite : Test
 satisfiesSuite =
     let
         assertSatisfy a b =
-            assertEqual True (Tree.satisfies (==) (==) (flip List.member) a b)
+            assertEqual True (Tree.satisfies (==) (==) (flip List.member) (List.member) a b)
 
         assertMiss a b =
-            assertEqual False (Tree.satisfies (==) (==) (flip List.member) a b)
+            assertEqual False (Tree.satisfies (==) (==) (flip List.member) (List.member) a b)
     in
         suite "recursive condition checking"
             [ test "non-colliding leafs do not collide"

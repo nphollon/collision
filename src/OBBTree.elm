@@ -46,8 +46,12 @@ collide bodyA bodyB =
         boxFaceCollide boxA faceB =
             BoundingBox.collideWithFace (Transform.faceFromBodyFrame bodyB faceB)
                 (Transform.add bodyA boxA)
+
+        faceBoxCollide faceA boxB =
+            BoundingBox.collideWithFace (Transform.faceFromBodyFrame bodyA faceA)
+                (Transform.add bodyB boxB)
     in
-        Maybe.map2 (Tree.satisfies boxCollide faceCollide boxFaceCollide)
+        Maybe.map2 (Tree.satisfies boxCollide faceCollide boxFaceCollide faceBoxCollide)
             bodyA.bounds
             bodyB.bounds
             |> Maybe.withDefault False

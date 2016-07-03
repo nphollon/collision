@@ -37,7 +37,6 @@ type alias Body a =
 The overall time to build the OBBTree is O(n log^2 n), where n is the number of faces.
 
 Bug: Failing to partition faces
-Bug: Box-face collision only works one way
 -}
 create : List Face -> Maybe Bounds
 create =

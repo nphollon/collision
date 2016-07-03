@@ -9,32 +9,32 @@ type Tree a b
     | Node a (Tree a b) (Tree a b)
 
 
-satisfies : (a -> a -> Bool) -> (b -> b -> Bool) -> (a -> b -> Bool) -> Tree a b -> Tree a b -> Bool
-satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf a b =
+satisfies : (a -> c -> Bool) -> (b -> d -> Bool) -> (a -> d -> Bool) -> (b -> c -> Bool) -> Tree a b -> Tree c d -> Bool
+satisfies nodeNode leafLeaf nodeLeaf leafNode a b =
     case ( a, b ) of
         ( Leaf aVal, Leaf bVal ) ->
-            checkTwoLeafs aVal bVal
+            leafLeaf aVal bVal
 
         ( Leaf aVal, Node bVal bFst bSnd ) ->
-            if checkNodeAndLeaf bVal aVal then
-                (satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf a bFst)
-                    || (satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf a bSnd)
+            if leafNode aVal bVal then
+                (satisfies nodeNode leafLeaf nodeLeaf leafNode a bFst)
+                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode a bSnd)
             else
                 False
 
         ( Node aVal aFst aSnd, Leaf bVal ) ->
-            if checkNodeAndLeaf aVal bVal then
-                (satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf aFst b)
-                    || (satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf aSnd b)
+            if nodeLeaf aVal bVal then
+                (satisfies nodeNode leafLeaf nodeLeaf leafNode aFst b)
+                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode aSnd b)
             else
                 False
 
         ( Node aVal aFst aSnd, Node bVal bFst bSnd ) ->
-            if checkTwoNodes aVal bVal then
-                (satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf aFst bFst)
-                    || (satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf aFst bSnd)
-                    || (satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf aSnd bFst)
-                    || (satisfies checkTwoNodes checkTwoLeafs checkNodeAndLeaf aSnd bSnd)
+            if nodeNode aVal bVal then
+                (satisfies nodeNode leafLeaf nodeLeaf leafNode aFst bFst)
+                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode aFst bSnd)
+                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode aSnd bFst)
+                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode aSnd bSnd)
             else
                 False
 
