@@ -1,5 +1,5 @@
-Collisions
-==========
+Collision
+=========
 
 A 3D collision-detection library for Elm.
 
