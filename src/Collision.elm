@@ -16,27 +16,20 @@ This module will not work for 2D objects! Even if you add a dummy z-coordinate t
 
 import Json.Encode exposing (Value)
 import Json.Decode exposing (Decoder)
-import BoundingBox exposing (BoundingBox)
-import Tree exposing (Tree)
-import Vector exposing (Vector)
-import Quaternion exposing (Quaternion)
+import OBBTree
 import Face exposing (Face)
 
 
 {-| The boundary data for an object, stored as an OBBTree.
 -}
 type alias Bounds =
-    Tree BoundingBox BoundingBox
+    OBBTree.OBBTree
 
 
 {-| An object in three-dimensional space. When testing for collisions, the bounds are repositioned to the given position and orientation.
 -}
 type alias Body a =
-    { a
-        | position : Vector
-        , orientation : Quaternion
-        , bounds : Bounds
-    }
+    OBBTree.Body a
 
 
 {-| Generate the OBBTree for a surface. The list of faces defines the surface.
@@ -48,25 +41,25 @@ TODO: Fix behavior for single faces
 -}
 create : Int -> List Face -> Bounds
 create =
-    BoundingBox.create
+    OBBTree.create
 
 
 {-| Determine whether two bodies collide.
 -}
 collide : Body b -> Body b' -> Bool
-collide a b =
-    BoundingBox.collide a a.bounds b b.bounds
+collide =
+    OBBTree.collide
 
 
 {-| Encode an OBBTree as JSON.
 -}
 encode : Bounds -> Value
 encode =
-    Tree.encode BoundingBox.encode BoundingBox.encode
+    OBBTree.encode
 
 
 {-| A JSON decoder for an OBBTree encoded with the above function.
 -}
 decode : Decoder Bounds
 decode =
-    Tree.decode BoundingBox.decode BoundingBox.decode
+    OBBTree.decode

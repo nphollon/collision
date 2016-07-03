@@ -1,4 +1,4 @@
-module Face exposing (Face, face, vertexList, vertexTuple, cross, collide, encode, decode)
+module Face exposing (Face, FaceFacts, face, getFacts, vertexList, vertexTuple, cross, collide, encode, decode)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
@@ -18,6 +18,30 @@ face p q r =
     , q = q
     , r = r
     }
+
+
+type alias FaceFacts =
+    { face : Face
+    , area : Float
+    , center : Vector
+    }
+
+
+getFacts : Face -> FaceFacts
+getFacts face =
+    let
+        area =
+            0.5 * (Vector.length (cross face))
+
+        center =
+            Vector.add face.p face.q
+                |> Vector.add face.r
+                |> Vector.scale (1 / 3)
+    in
+        { face = face
+        , area = area
+        , center = center
+        }
 
 
 encode : Face -> Value

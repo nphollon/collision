@@ -1,10 +1,9 @@
-module BoundingBox exposing (Body, BoundingBox, boxCollide, collide, boxCreate, create, projectAndSplit, encode, decode)
+module BoundingBox exposing (BoundingBox, collide, create, encode, decode)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
-import Tree exposing (Tree(..))
 import Transform
 import Hull
 import Face exposing (Face)
@@ -33,46 +32,15 @@ encode box =
 
 decode : Decoder BoundingBox
 decode =
-    let
-        construct a b c position orientation =
-            { a = a
-            , b = b
-            , c = c
-            , position = position
-            , orientation = orientation
-            }
-    in
-        (Decode.object5 construct) ("a" := Decode.float)
-            ("b" := Decode.float)
-            ("c" := Decode.float)
-            ("position" := Vector.decode)
-            ("orientation" := Quaternion.decode)
+    (Decode.object5 BoundingBox) ("a" := Decode.float)
+        ("b" := Decode.float)
+        ("c" := Decode.float)
+        ("position" := Vector.decode)
+        ("orientation" := Quaternion.decode)
 
 
-type alias Body a =
-    { a
-        | position : Vector
-        , orientation : Quaternion
-    }
-
-
-collide : Body b -> Tree BoundingBox BoundingBox -> Body b' -> Tree BoundingBox BoundingBox -> Bool
-collide bodyA boxTreeA bodyB boxTreeB =
-    let
-        add { position, orientation } addend =
-            { addend
-                | position = Vector.add position addend.position
-                , orientation = Quaternion.compose addend.orientation orientation
-            }
-
-        condition boxA boxB =
-            boxCollide (add bodyA boxA) (add bodyB boxB)
-    in
-        Tree.satisfies condition condition condition boxTreeA boxTreeB
-
-
-boxCollide : BoundingBox -> BoundingBox -> Bool
-boxCollide boxA boxB =
+collide : BoundingBox -> BoundingBox -> Bool
+collide boxA boxB =
     let
         t =
             Transform.toBodyFrame boxB.position boxA
@@ -188,144 +156,8 @@ boxCollide boxA boxB =
             && aMinorBMinor
 
 
-type alias FaceFacts =
-    { face : Face
-    , area : Float
-    , center : Vector
-    }
-
-
-getFacts : Face -> FaceFacts
-getFacts face =
-    let
-        area =
-            0.5 * (Vector.length (Face.cross face))
-
-        center =
-            Vector.add face.p face.q
-                |> Vector.add face.r
-                |> Vector.scale (1 / 3)
-    in
-        { face = face
-        , area = area
-        , center = center
-        }
-
-
-create : Int -> List Face -> Tree BoundingBox BoundingBox
-create iter faces =
-    let
-        bb =
-            boxCreate faces
-    in
-        if iter <= 0 then
-            Leaf bb
-        else
-            case partitionFaces bb faces of
-                Nothing ->
-                    Leaf bb
-
-                Just ( left, right ) ->
-                    (Node bb) (create (iter - 1) left)
-                        (create (iter - 1) right)
-
-
-partitionFaces : BoundingBox -> List Face -> Maybe ( List Face, List Face )
-partitionFaces box faces =
-    let
-        transform =
-            Quaternion.rotateVector box.orientation
-
-        basis =
-            [ ( box.a, Vector.vector 1 0 0 )
-            , ( box.b, Vector.vector 0 1 0 )
-            , ( box.c, Vector.vector 0 0 1 )
-            ]
-
-        orderedBasis =
-            List.sortWith (\a b -> compare (fst b) (fst a))
-                basis
-
-        projections =
-            List.map (snd >> transform >> projectAndSplit)
-                orderedBasis
-    in
-        List.map getFacts faces
-            |> tryApply projections
-
-
-projectAndSplit : Vector -> List FaceFacts -> Maybe ( List Face, List Face )
-projectAndSplit axis factsList =
-    let
-        equal a b =
-            (a - b) ^ 2 < 1.0e-10
-
-        project facts =
-            ( Vector.dot facts.center axis, facts )
-
-        init =
-            { firstHalf = []
-            , lastHalf = []
-            , splitValue = 0 / 0
-            , index = 0
-            , done = False
-            }
-
-        addFace projectedFacts accumulator =
-            if accumulator.done then
-                updateFirstHalf projectedFacts accumulator
-            else
-                updateBothHalves projectedFacts accumulator
-                    |> checkIfDone
-
-        updateFirstHalf ( _, facts ) acc =
-            { acc | firstHalf = facts.face :: acc.firstHalf }
-
-        updateBothHalves ( value, facts ) acc =
-            if equal value acc.splitValue then
-                { acc | firstHalf = facts.face :: acc.firstHalf }
-            else
-                { acc
-                    | lastHalf = acc.firstHalf ++ acc.lastHalf
-                    , firstHalf = [ facts.face ]
-                    , splitValue = value
-                }
-
-        checkIfDone acc =
-            if (acc.index >= limit) && not (List.isEmpty acc.lastHalf) then
-                { acc | done = True }
-            else
-                { acc | index = acc.index + 1 }
-
-        limit =
-            List.length factsList // 2
-
-        returnValue accumulated =
-            if List.isEmpty accumulated.lastHalf then
-                Nothing
-            else
-                Just ( accumulated.firstHalf, accumulated.lastHalf )
-    in
-        List.map project factsList
-            |> List.sortBy fst
-            |> List.foldr addFace init
-            |> returnValue
-
-
-tryApply : List (a -> Maybe b) -> a -> Maybe b
-tryApply maybes arg =
-    let
-        tryAgain newFunction lastValue =
-            if lastValue == Nothing then
-                newFunction arg
-            else
-                lastValue
-    in
-        List.foldl tryAgain Nothing maybes
-
-
-boxCreate : List Face -> BoundingBox
-boxCreate faces =
+create : List Face -> BoundingBox
+create faces =
     let
         hull =
             faces
@@ -337,7 +169,7 @@ boxCreate faces =
                 |> Vector.unique
 
         facts =
-            List.map getFacts hull
+            List.map Face.getFacts hull
 
         center =
             facts
