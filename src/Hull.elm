@@ -25,8 +25,11 @@ type alias State =
 hull : List Vector -> List Face
 hull points =
     let
+        uniquePoints =
+            Vector.unique points
+
         sets =
-            allocate (simplex points) points
+            allocate (simplex uniquePoints) uniquePoints
 
         start =
             { pointSets = Dict.empty
@@ -294,13 +297,11 @@ farthestFromBase face points =
                     else
                         b
                 )
-                ( bigPositive, 0 )
+                ( face.p, 0 )
             |> fst
 
 
 {-| Given a list of points, build a tetrahedron out of 4 extreme points.
-
-WARNING: Does not handle coplanar/colinear point sets
 -}
 simplex : List Vector -> List Face
 simplex points =
@@ -329,10 +330,20 @@ simplex points =
                 , r = farthestFromLine baseLine points
                 }
 
+            isColinear =
+                base.p == base.r
+
             apex =
                 farthestFromBase base points
+
+            isCoplanar =
+                apex == base.p
         in
-            if isInFrontOf base apex then
+            if isColinear then
+                [ base ]
+            else if isCoplanar then
+                coplanarHull base points
+            else if isInFrontOf base apex then
                 [ Face.face base.p base.r base.q
                 , Face.face base.q base.r apex
                 , Face.face base.r base.p apex
@@ -354,6 +365,20 @@ degenerateSimplex points =
 
         _ ->
             []
+
+
+coplanarHull : Face -> List Vector -> List Face
+coplanarHull base points =
+    let
+        vantage =
+            Vector.add base.p (Face.cross base)
+    in
+        case hull2d base vantage points of
+            first :: second :: rest ->
+                List.map2 (Face.face first) (second :: rest) rest
+
+            _ ->
+                []
 
 
 {-| check if a given point should replace an
@@ -464,7 +489,7 @@ farthestFromLine ( a, b ) cs =
                     else
                         d
                 )
-                ( bigPositive, 0 )
+                ( a, 0 )
             |> fst
 
 

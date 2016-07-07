@@ -1,23 +1,25 @@
 module Main exposing (..)
 
 import ElmTest exposing (..)
+import QuaternionTest
 import FaceTest
 import TreeTest
+import HullTest
+import CovarianceTest
 import BoundingBoxTest
 import OBBTreeTest
-import CovarianceTest
-import QuaternionTest
 
 
 testSuite : Test
 testSuite =
     suite "All tests"
         [ FaceTest.testSuite
+        , QuaternionTest.testSuite
         , TreeTest.testSuite
+        , HullTest.testSuite
+        , CovarianceTest.testSuite
         , BoundingBoxTest.testSuite
         , OBBTreeTest.testSuite
-        , CovarianceTest.testSuite
-        , QuaternionTest.testSuite
         ]
 
 
