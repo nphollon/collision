@@ -8,6 +8,33 @@ import Vector exposing (Vector)
 
 testSuite : Test
 testSuite =
+    suite "Eigenbasis for a real symmetric matrix"
+        [ diagonalSuite
+        , nonDiagonalSuite
+        ]
+
+
+diagonalSuite : Test
+diagonalSuite =
+    let
+        matrix =
+            Covariance.init 2 0 0 2 0 2
+
+        eigenbasis =
+            Covariance.eigenbasis matrix
+    in
+        suite "Off-diagonal elements are zero"
+            [ test "x component should be non-zero"
+                <| assertNotEqual (Vector.vector 0 0 0)
+                    eigenbasis.x
+            , test "y component should be non-zero"
+                <| assertNotEqual (Vector.vector 0 0 0)
+                    eigenbasis.y
+            ]
+
+
+nonDiagonalSuite : Test
+nonDiagonalSuite =
     let
         matrix =
             Covariance.init -1 1 3 2 0 2
@@ -15,7 +42,7 @@ testSuite =
         eigenbasis =
             Covariance.eigenbasis matrix
     in
-        suite "Eigenbasis for a real symmetric matrix"
+        suite "Off-diagonal elements are nonzero"
             [ test "one component should be (2, 1, 3) normalized"
                 <| assertBasisContains (Vector.normalize (Vector.vector 2 1 3))
                     eigenbasis

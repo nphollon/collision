@@ -124,14 +124,40 @@ type alias Basis =
 
 eigenbasis : Covariance -> Basis
 eigenbasis matrix =
+    if isDiagonal matrix then
+        { x = Vector.vector 1 0 0
+        , y = Vector.vector 0 1 0
+        , z = Vector.vector 0 0 1
+        }
+    else
+        powerIteration matrix
+
+
+isDiagonal : Covariance -> Bool
+isDiagonal (Covariance matrix) =
+    isZero matrix.xy && isZero matrix.xz && isZero matrix.yz
+
+
+isZero : Float -> Bool
+isZero x =
+    x ^ 2 < 1.0e-10
+
+
+
+{- Power iteration -}
+
+
+type alias Eigen =
+    { value : Float
+    , vector : Vector
+    }
+
+
+powerIteration : Covariance -> Basis
+powerIteration matrix =
     let
         solve m =
-            case convergeToEigenvector 50 m guess of
-                Ok v ->
-                    v
-
-                Err v ->
-                    v
+            collapse (convergeToEigenvector 50 m guess)
 
         guess =
             { value = 0
@@ -148,16 +174,6 @@ eigenbasis matrix =
         , y = yEigen.vector
         , z = Vector.cross xEigen.vector yEigen.vector
         }
-
-
-type alias Eigen =
-    { value : Float
-    , vector : Vector
-    }
-
-
-
-{- Power iteration -}
 
 
 convergeToEigenvector : Float -> Covariance -> Eigen -> Result Eigen Eigen
@@ -183,6 +199,16 @@ convergeToEigenvector iter matrix guess =
             Err nextGuess
         else
             convergeToEigenvector (iter - 1) matrix nextGuess
+
+
+collapse : Result a a -> a
+collapse result =
+    case result of
+        Ok v ->
+            v
+
+        Err v ->
+            v
 
 
 rayleighQuotient : Covariance -> Vector -> Float

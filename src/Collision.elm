@@ -101,7 +101,7 @@ type alias Body a =
 
 The overall time to build the OBBTree is O(n log^2 n), where n is the number of faces.
 -}
-create : List Face -> Maybe Bounds
+create : List Face -> Bounds
 create =
     OBBTree.create
 

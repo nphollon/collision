@@ -1,18 +1,85 @@
 module BoundingBoxTest exposing (testSuite)
 
 import ElmTest exposing (..)
+import Assertion exposing (..)
 import Json.Decode as Decode
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
+import Face exposing (Face)
 import BoundingBox as BoundingBox exposing (BoundingBox)
 
 
 testSuite : Test
 testSuite =
-    suite "Collision detection"
-        [ collideWithBoxSuite
+    suite "Bounding box primitive"
+        [ creationSuite
+        , collideWithBoxSuite
         , collideWithFaceSuite
         , jsonSuite
+        ]
+
+
+creationSuite : Test
+creationSuite =
+    let
+        bounds =
+            BoundingBox.create cube
+    in
+        suite "Creating a bounding box for a cube"
+            [ test "Centered at origin"
+                <| assertEqualVector (Vector.vector 0 0 0)
+                    bounds.position
+            , test "Major radius of 1"
+                <| assertEqualFloat 1.0
+                    bounds.a
+            , test "Middle radius of 1"
+                <| assertEqualFloat 1.0
+                    bounds.b
+            , test "Minor radius of 1"
+                <| assertEqualFloat 1.0
+                    bounds.c
+            ]
+
+
+cube : List Face
+cube =
+    let
+        ttt =
+            Vector.vector 1 1 1
+
+        ttf =
+            Vector.vector 1 1 -1
+
+        tft =
+            Vector.vector 1 -1 1
+
+        tff =
+            Vector.vector 1 -1 -1
+
+        ftt =
+            Vector.vector -1 1 1
+
+        ftf =
+            Vector.vector -1 1 -1
+
+        fft =
+            Vector.vector -1 -1 1
+
+        fff =
+            Vector.vector -1 -1 -1
+    in
+        [ Face.face ttt tft tff
+        , Face.face tff ttf ttt
+        , Face.face fff fft ftt
+        , Face.face ftt ftf fff
+        , Face.face ttt ttf ftf
+        , Face.face ftf ftt ttt
+        , Face.face fff tff tft
+        , Face.face tft fft fff
+        , Face.face ttt ftt fft
+        , Face.face fft tft ttt
+        , Face.face fff ftf ttf
+        , Face.face ttf tff fff
         ]
 
 

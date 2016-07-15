@@ -2,7 +2,6 @@ module OBBTree exposing (OBBTree, Body, collide, create, projectAndSplit, encode
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
-import List.Extra as ListX
 import Tree exposing (Tree(..))
 import BoundingBox exposing (BoundingBox)
 import Transform
@@ -58,14 +57,14 @@ collide bodyA bodyB =
             |> Maybe.withDefault False
 
 
-create : List Face -> Maybe OBBTree
+create : List Face -> OBBTree
 create faces =
     case faces of
         [] ->
-            Nothing
+            Leaf (Face.face (Vector.vector 0 0 0) (Vector.vector 0 0 0) (Vector.vector 0 0 0))
 
         f :: [] ->
-            Just (Leaf f)
+            Leaf f
 
         _ ->
             let
@@ -75,7 +74,7 @@ create faces =
                 ( left, right ) =
                     partitionFaces bb faces
             in
-                Maybe.map2 (Node bb) (create left) (create right)
+                Node bb (create left) (create right)
 
 
 partitionFaces : BoundingBox -> List Face -> ( List Face, List Face )
@@ -175,4 +174,16 @@ tryApply maybes arg =
 
 simpleSplit : List a -> ( List a, List a )
 simpleSplit whole =
-    ListX.splitAt (List.length whole // 2) whole
+    let
+        transfer n ( firstHalf, lastHalf ) =
+            if n <= 0 then
+                ( firstHalf, lastHalf )
+            else
+                case lastHalf of
+                    [] ->
+                        ( firstHalf, lastHalf )
+
+                    x :: xs ->
+                        transfer (n - 1) ( x :: firstHalf, xs )
+    in
+        transfer (List.length whole // 2) ( [], whole )
