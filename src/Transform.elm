@@ -72,8 +72,8 @@ degreesFromForward body point =
 
 
 add : Orientable a -> Orientable b -> Orientable b
-add { position, orientation } addend =
-    { addend
-        | position = Vector.add position addend.position
-        , orientation = Quaternion.compose addend.orientation orientation
+add frame component =
+    { component
+        | position = fromBodyFrame frame component.position
+        , orientation = Quaternion.compose frame.orientation component.orientation
     }
