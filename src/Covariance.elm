@@ -140,7 +140,7 @@ isDiagonal (Covariance matrix) =
 
 isZero : Float -> Bool
 isZero x =
-    x ^ 2 < 1.0e-10
+    x ^ 2 < 1.0e-6
 
 
 

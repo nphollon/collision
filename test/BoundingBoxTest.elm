@@ -30,13 +30,13 @@ creationSuite =
                 <| assertEqualVector (Vector.vector 0 0 0)
                     bounds.position
             , test "Major radius of 1"
-                <| assertEqualFloat 1.0
+                <| assertEqualFloat 3.6
                     bounds.a
             , test "Middle radius of 1"
-                <| assertEqualFloat 1.0
+                <| assertEqualFloat 3.6
                     bounds.b
             , test "Minor radius of 1"
-                <| assertEqualFloat 1.0
+                <| assertEqualFloat 3.6
                     bounds.c
             ]
 
@@ -44,42 +44,42 @@ creationSuite =
 cube : List Face
 cube =
     let
-        ttt =
-            Vector.vector 1 1 1
+        one =
+            Vector.vector 3.6 -3.6 -3.6
 
-        ttf =
-            Vector.vector 1 1 -1
+        two =
+            Vector.vector 3.6 -3.6 3.6
 
-        tft =
-            Vector.vector 1 -1 1
+        three =
+            Vector.vector -3.6 -3.6 3.599999
 
-        tff =
-            Vector.vector 1 -1 -1
+        four =
+            Vector.vector -3.599998 -3.6 -3.600001
 
-        ftt =
-            Vector.vector -1 1 1
+        five =
+            Vector.vector 3.600002 3.6 -3.599998
 
-        ftf =
-            Vector.vector -1 1 -1
+        six =
+            Vector.vector 3.599998 3.6 3.600002
 
-        fft =
-            Vector.vector -1 -1 1
+        seven =
+            Vector.vector -3.600001 3.6 3.599998
 
-        fff =
-            Vector.vector -1 -1 -1
+        eight =
+            Vector.vector -3.5999999 3.6 -3.6
     in
-        [ Face.face ttt tft tff
-        , Face.face tff ttf ttt
-        , Face.face fff fft ftt
-        , Face.face ftt ftf fff
-        , Face.face ttt ttf ftf
-        , Face.face ftf ftt ttt
-        , Face.face fff tff tft
-        , Face.face tft fft fff
-        , Face.face ttt ftt fft
-        , Face.face fft tft ttt
-        , Face.face fff ftf ttf
-        , Face.face ttf tff fff
+        [ Face.face one two three
+        , Face.face one three four
+        , Face.face five eight seven
+        , Face.face five seven six
+        , Face.face one five six
+        , Face.face one six two
+        , Face.face two six seven
+        , Face.face two seven three
+        , Face.face three seven eight
+        , Face.face three eight four
+        , Face.face five one four
+        , Face.face five four eight
         ]
 
 
