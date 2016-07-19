@@ -1,4 +1,4 @@
-module OBBTree exposing (OBBTree, Body, collide, create, projectAndSplit, encode, decode)
+module OBBTree exposing (OBBTree, Body, collide, create, empty, projectAndSplit, encode, decode)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
@@ -18,7 +18,7 @@ type alias Body a =
     { a
         | position : Vector
         , orientation : Quaternion
-        , bounds : Maybe OBBTree
+        , bounds : OBBTree
     }
 
 
@@ -51,17 +51,24 @@ collide bodyA bodyB =
             BoundingBox.collideWithFace (Transform.faceFromBodyFrame bodyA faceA)
                 (Transform.add bodyB boxB)
     in
-        Maybe.map2 (Tree.satisfies boxCollide faceCollide boxFaceCollide faceBoxCollide)
+        Tree.satisfies boxCollide
+            faceCollide
+            boxFaceCollide
+            faceBoxCollide
             bodyA.bounds
             bodyB.bounds
-            |> Maybe.withDefault False
+
+
+empty : OBBTree
+empty =
+    Leaf (Face.face (Vector.vector 0 0 0) (Vector.vector 0 0 0) (Vector.vector 0 0 0))
 
 
 create : List Face -> OBBTree
 create faces =
     case faces of
         [] ->
-            Leaf (Face.face (Vector.vector 0 0 0) (Vector.vector 0 0 0) (Vector.vector 0 0 0))
+            empty
 
         f :: [] ->
             Leaf f

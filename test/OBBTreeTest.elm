@@ -42,11 +42,11 @@ collideSuite =
 
         assertHit a b =
             assertEqual True
-                (OBBTree.collide { a | bounds = Just box } { b | bounds = Just box })
+                (OBBTree.collide { a | bounds = box } { b | bounds = box })
 
         assertMiss a b =
             assertEqual False
-                (OBBTree.collide { a | bounds = Just box } { b | bounds = Just box })
+                (OBBTree.collide { a | bounds = box } { b | bounds = box })
     in
         suite "Body collisions"
             [ test "bodies that do not collide"
@@ -228,5 +228,5 @@ defaultBody : Body {}
 defaultBody =
     { position = Vector.vector 0 0 0
     , orientation = Quaternion.fromVector (Vector.vector 0 0 0)
-    , bounds = Nothing
+    , bounds = OBBTree.empty
     }

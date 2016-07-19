@@ -1,4 +1,4 @@
-module Collision exposing (Body, Bounds, Face, Vector, Quaternion, face, vector, quaternion, axisAngleRotation, collide, create, encode, decode)
+module Collision exposing (Body, Bounds, Face, Vector, Quaternion, face, vector, quaternion, axisAngleRotation, collide, create, empty, encode, decode)
 
 {-| Detect collisions between rigid three-dimensional objects. The process goes like this:
 
@@ -16,7 +16,7 @@ This module will not work for 2D objects.
 @docs Vector, vector, Quaternion, quaternion, axisAngleRotation, Face, face
 
 # Creating Bounds
-@docs Bounds, create
+@docs Bounds, create, empty
 
 # Checking Collisions
 @docs Body, collide
@@ -93,17 +93,24 @@ type alias Body a =
     { a
         | position : Vector
         , orientation : Quaternion
-        , bounds : Maybe Bounds
+        , bounds : Bounds
     }
 
 
-{-| Generate the OBBTree for a surface. The list of faces defines the surface. If the list is empty, the function returns Nothing.
+{-| Generate the bounding tree for an object. The list of faces defines the surface.
 
 The overall time to build the OBBTree is O(n log^2 n), where n is the number of faces.
 -}
 create : List Face -> Bounds
 create =
     OBBTree.create
+
+
+{-| Create an empty bounding tree. This will not collide with anything.
+-}
+empty : Bounds
+empty =
+    OBBTree.empty
 
 
 {-| Determine whether two bodies collide.
