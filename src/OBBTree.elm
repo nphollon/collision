@@ -61,7 +61,11 @@ collide bodyA bodyB =
 
 empty : OBBTree
 empty =
-    Leaf (Face.face (Vector.vector 0 0 0) (Vector.vector 0 0 0) (Vector.vector 0 0 0))
+    let
+        farPoint =
+            Vector.vector (1 / 0) 0 0
+    in
+        Leaf (Face.face farPoint farPoint farPoint)
 
 
 create : List Face -> OBBTree
