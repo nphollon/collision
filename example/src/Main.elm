@@ -6,7 +6,7 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Evt
 import Html.App as App
-import WebGL exposing (Drawable, Shader)
+import WebGL exposing (Drawable, Shader, Renderable)
 import Math.Vector3 as Vec3 exposing (Vec3)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Vector exposing (Vector)
@@ -25,7 +25,8 @@ main =
 
 type alias Model =
     { room : Room
-    , position : Vector
+    , redPosition : Vector
+    , bluePosition : Vector
     }
 
 
@@ -35,7 +36,12 @@ type Room
 
 
 type alias PositionFields =
-    { xText : String, yText : String, zText : String }
+    { xText : String, yText : String, zText : String, solid : Solid }
+
+
+type Solid
+    = Red
+    | Blue
 
 
 type Action
@@ -50,7 +56,8 @@ type Action
 init : ( Model, Cmd Action )
 init =
     { room = Entrance
-    , position = Vector.vector 0 0 0
+    , redPosition = Vector.vector 0 0 0
+    , bluePosition = Vector.vector 0 0 -5
     }
         ! []
 
@@ -67,10 +74,10 @@ update action model =
             { model | room = room } ! []
 
         ( SetPosition, PositionEditor fields ) ->
-            updatePosition identity model fields ! []
+            setPosition model fields ! []
 
         ( NudgePosition, PositionEditor fields ) ->
-            updatePosition (Vector.add model.position) model fields ! []
+            nudgePosition model fields ! []
 
         ( EditX xText, PositionEditor fields ) ->
             { model | room = PositionEditor { fields | xText = xText } }
@@ -88,20 +95,45 @@ update action model =
             model ! []
 
 
-updatePosition : (Vector -> Vector) -> Model -> PositionFields -> Model
-updatePosition transform model fields =
+setPosition : Model -> PositionFields -> Model
+setPosition model fields =
+    let
+        newPosition =
+            parseVector fields
+    in
+        case fields.solid of
+            Red ->
+                { model | redPosition = newPosition }
+
+            Blue ->
+                { model | bluePosition = newPosition }
+
+
+nudgePosition : Model -> PositionFields -> Model
+nudgePosition model fields =
+    let
+        displacement =
+            parseVector fields
+    in
+        case fields.solid of
+            Red ->
+                { model | redPosition = Vector.add model.redPosition displacement }
+
+            Blue ->
+                { model | bluePosition = Vector.add model.bluePosition displacement }
+
+
+parseVector : PositionFields -> Vector
+parseVector fields =
     let
         toFloat text =
             String.toFloat text
                 |> Result.withDefault 0
-
-        vector =
-            Vector.vector
-                (toFloat fields.xText)
-                (toFloat fields.yText)
-                (toFloat fields.zText)
     in
-        { model | position = transform vector }
+        Vector.vector
+            (toFloat fields.xText)
+            (toFloat fields.yText)
+            (toFloat fields.zText)
 
 
 view : Model -> Html Action
@@ -144,26 +176,35 @@ controlPanel model =
     in
         Html.div [ Attr.style [ ( "width", "200px" ) ] ]
             [ Html.h1 [ titleStyle ] [ Html.text title ]
-            , Html.hr [ Attr.style [ ( "width", "80%" ) ] ] []
+            , divider
             , controls
             ]
+
+
+divider : Html a
+divider =
+    Html.hr [ Attr.style [ ( "width", "80%" ) ] ] []
 
 
 entranceControls : Html Action
 entranceControls =
     let
-        openPositionEditor =
+        editPositionFor solid =
             { xText = ""
             , yText = ""
             , zText = ""
+            , solid = solid
             }
                 |> PositionEditor
                 |> ChangeRoom
     in
         Html.div []
             [ Html.button
-                [ Evt.onClick openPositionEditor ]
-                [ Html.text "Change Position" ]
+                [ Evt.onClick (editPositionFor Red) ]
+                [ Html.text "Change Red Position" ]
+            , Html.button
+                [ Evt.onClick (editPositionFor Blue) ]
+                [ Html.text "Change Blue Position" ]
             ]
 
 
@@ -190,9 +231,26 @@ inputField sendMsg label =
 statusPanel : Model -> Html a
 statusPanel model =
     Html.div []
-        [ Html.p [] [ Html.text ("X = " ++ float model.position.x) ]
-        , Html.p [] [ Html.text ("Y = " ++ float model.position.y) ]
-        , Html.p [] [ Html.text ("Z = " ++ float model.position.z) ]
+        [ divider
+        , displayPosition "#FF4137" model.redPosition
+        , displayPosition "#6F7AC5" model.bluePosition
+        ]
+
+
+displayPosition : String -> Vector -> Html a
+displayPosition cssColor position =
+    Html.div
+        [ Attr.style
+            [ ( "color", cssColor )
+            , ( "font-weight", "bold" )
+            , ( "padding", "10px 15px" )
+            ]
+        ]
+        [ Html.text ("X = " ++ float position.x)
+        , Html.br [] []
+        , Html.text ("Y = " ++ float position.y)
+        , Html.br [] []
+        , Html.text ("Z = " ++ float position.z)
         ]
 
 
@@ -230,7 +288,14 @@ world model =
         , Attr.height 500
         , Attr.style [ ( "background-color", "#d0f0ff" ) ]
         ]
-        [ WebGL.render vertexShader fragmentShader cube (uniform model.position) ]
+        [ drawSolid Red model.redPosition
+        , drawSolid Blue model.bluePosition
+        ]
+
+
+drawSolid : Solid -> Vector -> Renderable
+drawSolid solid position =
+    WebGL.render vertexShader fragmentShader cube (uniform solid position)
 
 
 cube : Drawable Vertex
@@ -258,9 +323,17 @@ cube =
         }
 
 
-uniform : Vector -> Uniform
-uniform position =
+uniform : Solid -> Vector -> Uniform
+uniform solid position =
     let
+        color =
+            case solid of
+                Red ->
+                    Vec3.vec3 1 0 0
+
+                Blue ->
+                    Vec3.vec3 0 0 1
+
         cameraPosition =
             Vector.vector 5 5 5
 
@@ -277,6 +350,7 @@ uniform position =
         , perspective = Mat4.makeOrtho -10 10 -10 10 -100 100
         , placement = placement
         , inversePlacement = Mat4.inverseOrthonormal placement
+        , diffuseColor = color
         }
 
 
@@ -286,6 +360,7 @@ type alias Uniform =
     , cameraOrientation : Mat4
     , placement : Mat4
     , inversePlacement : Mat4
+    , diffuseColor : Vec3
     }
 
 
@@ -308,6 +383,7 @@ vertexShader =
          uniform mat4 perspective;
          uniform mat4 placement;
          uniform mat4 inversePlacement;
+         uniform vec3 diffuseColor;
 
          varying vec3 nonspecularColor;
          varying float specularFactor;
@@ -321,8 +397,7 @@ vertexShader =
 
 
              // Lighting
-             vec3 ambientColor = vec3(0, 0, 0);
-             vec3 diffuseColor = vec3(1, 0, 0);
+             vec3 ambientColor = vec3(0.1, 0.1, 0.1);
              vec3 lightDirection = normalize(vec3(1, 1.5, 2));
 
              vec3 surfaceNormal = vec3(vec4(normal, 0) * inversePlacement);
@@ -346,7 +421,7 @@ fragmentShader =
 
         void main() {
             float shininess = 3.0;
-            vec3 baseSpecColor = vec3(0, 0, 1);
+            vec3 baseSpecColor = vec3(1, 1, 1);
 
             vec3 specularColor = baseSpecColor * pow(specularFactor, shininess);
 
