@@ -1,13 +1,15 @@
 module Main exposing (main)
 
 import Array
+import String
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events as Evt
 import Html.App as App
 import WebGL exposing (Drawable, Shader)
 import Math.Vector3 as Vec3 exposing (Vec3)
 import Math.Matrix4 as Mat4 exposing (Mat4)
-import Vector
+import Vector exposing (Vector)
 import Model exposing (Vertex)
 
 
@@ -22,16 +24,29 @@ main =
 
 
 type alias Model =
-    {}
+    { xText : String
+    , yText : String
+    , zText : String
+    , position : Vector
+    }
 
 
 type Action
-    = NoAction
+    = EditX String
+    | EditY String
+    | EditZ String
+    | SetPosition
+    | NudgePosition
 
 
 init : ( Model, Cmd Action )
 init =
-    {} ! []
+    { xText = ""
+    , yText = ""
+    , zText = ""
+    , position = Vector.vector 0 0 0
+    }
+        ! []
 
 
 subscriptions : Model -> Sub Action
@@ -41,18 +56,57 @@ subscriptions model =
 
 update : Action -> Model -> ( Model, Cmd Action )
 update action model =
-    init
+    case action of
+        EditX xText ->
+            { model | xText = xText } ! []
+
+        EditY yText ->
+            { model | yText = yText } ! []
+
+        EditZ zText ->
+            { model | zText = zText } ! []
+
+        SetPosition ->
+            updatePosition identity model ! []
+
+        NudgePosition ->
+            updatePosition (Vector.add model.position) model ! []
+
+
+updatePosition : (Vector -> Vector) -> Model -> Model
+updatePosition transform model =
+    let
+        toFloat text =
+            String.toFloat text
+                |> Result.withDefault 0
+
+        vector =
+            Vector.vector (toFloat model.xText) (toFloat model.yText) (toFloat model.zText)
+    in
+        { model | position = transform vector }
 
 
 view : Model -> Html Action
 view model =
     Html.div [ Attr.style [ ( "display", "flex" ), ( "justify-content", "center" ) ] ]
-        [ controlPanel
-        , world
+        [ sidebar model
+        , world model
         ]
 
 
-controlPanel : Html a
+sidebar : Model -> Html Action
+sidebar model =
+    Html.div
+        [ Attr.style
+            [ ( "display", "flex" )
+            , ( "flex-direction", "column" )
+            , ( "justify-content", "space-between" )
+            ]
+        ]
+        [ controlPanel, statusPanel model ]
+
+
+controlPanel : Html Action
 controlPanel =
     let
         titleStyle =
@@ -65,17 +119,73 @@ controlPanel =
         Html.div [ Attr.style [ ( "width", "200px" ) ] ]
             [ Html.h1 [ titleStyle ] [ Html.text "Control Panel" ]
             , Html.hr [ Attr.style [ ( "width", "80%" ) ] ] []
+            , positionControls
             ]
 
 
-world : Html a
-world =
+positionControls : Html Action
+positionControls =
+    Html.div []
+        [ inputField EditX "X = "
+        , inputField EditY "Y = "
+        , inputField EditZ "Z = "
+        , Html.button [ Evt.onClick SetPosition ] [ Html.text "Set position" ]
+        , Html.button [ Evt.onClick NudgePosition ] [ Html.text "Nudge position" ]
+        ]
+
+
+inputField : (String -> msg) -> String -> Html msg
+inputField sendMsg label =
+    Html.div [ Attr.style [ ( "display", "flex" ) ] ]
+        [ Html.span [ Attr.style [ ( "flex", "none" ) ] ] [ Html.text label ]
+        , Html.input [ Attr.size 10, Evt.onInput sendMsg ] []
+        ]
+
+
+statusPanel : Model -> Html a
+statusPanel model =
+    Html.div []
+        [ Html.p [] [ Html.text ("X = " ++ float model.position.x) ]
+        , Html.p [] [ Html.text ("Y = " ++ float model.position.y) ]
+        , Html.p [] [ Html.text ("Z = " ++ float model.position.z) ]
+        ]
+
+
+float : Float -> String
+float x =
+    let
+        sign =
+            if x > -5.0e-3 then
+                "+"
+            else
+                "-"
+
+        cents =
+            round (abs x * 100)
+
+        integerPart =
+            cents // 100
+
+        centRemainder =
+            cents % 100
+
+        decimal =
+            if centRemainder < 10 then
+                ".0"
+            else
+                "."
+    in
+        String.concat [ sign, toString integerPart, decimal, toString centRemainder ]
+
+
+world : Model -> Html a
+world model =
     WebGL.toHtml
         [ Attr.width 500
         , Attr.height 500
         , Attr.style [ ( "background-color", "#d0f0ff" ) ]
         ]
-        [ WebGL.render vertexShader fragmentShader cube uniform ]
+        [ WebGL.render vertexShader fragmentShader cube (uniform model.position) ]
 
 
 cube : Drawable Vertex
@@ -103,8 +213,8 @@ cube =
         }
 
 
-uniform : Uniform
-uniform =
+uniform : Vector -> Uniform
+uniform position =
     let
         cameraPosition =
             Vector.vector 5 5 5
@@ -114,11 +224,12 @@ uniform =
                 |> Mat4.rotate (turns -0.125) (Vec3.vec3 0 1 0)
 
         placement =
-            Mat4.identity
+            Vec3.fromRecord position
+                |> Mat4.makeTranslate
     in
         { cameraPosition = Vec3.fromRecord cameraPosition
         , cameraOrientation = cameraOrientation
-        , perspective = Mat4.makeOrtho -10 10 -10 10 -10 10
+        , perspective = Mat4.makeOrtho -10 10 -10 10 -100 100
         , placement = placement
         , inversePlacement = Mat4.inverseOrthonormal placement
         }

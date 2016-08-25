@@ -60,10 +60,6 @@ toVertexTriangle face =
 
 toVertex : Vector -> Vector -> Vertex
 toVertex position normal =
-    let
-        _ =
-            Debug.log "Position, Normal" ( position, normal )
-    in
-        { position = Vec3.fromRecord position
-        , normal = Vec3.fromRecord normal
-        }
+    { position = Vec3.fromRecord position
+    , normal = Vec3.fromRecord normal
+    }
