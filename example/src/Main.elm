@@ -24,26 +24,32 @@ main =
 
 
 type alias Model =
-    { xText : String
-    , yText : String
-    , zText : String
+    { room : Room
     , position : Vector
     }
+
+
+type Room
+    = Entrance
+    | PositionEditor PositionFields
+
+
+type alias PositionFields =
+    { xText : String, yText : String, zText : String }
 
 
 type Action
     = EditX String
     | EditY String
     | EditZ String
+    | ChangeRoom Room
     | SetPosition
     | NudgePosition
 
 
 init : ( Model, Cmd Action )
 init =
-    { xText = ""
-    , yText = ""
-    , zText = ""
+    { room = Entrance
     , position = Vector.vector 0 0 0
     }
         ! []
@@ -56,32 +62,44 @@ subscriptions model =
 
 update : Action -> Model -> ( Model, Cmd Action )
 update action model =
-    case action of
-        EditX xText ->
-            { model | xText = xText } ! []
+    case ( action, model.room ) of
+        ( ChangeRoom room, _ ) ->
+            { model | room = room } ! []
 
-        EditY yText ->
-            { model | yText = yText } ! []
+        ( SetPosition, PositionEditor fields ) ->
+            updatePosition identity model fields ! []
 
-        EditZ zText ->
-            { model | zText = zText } ! []
+        ( NudgePosition, PositionEditor fields ) ->
+            updatePosition (Vector.add model.position) model fields ! []
 
-        SetPosition ->
-            updatePosition identity model ! []
+        ( EditX xText, PositionEditor fields ) ->
+            { model | room = PositionEditor { fields | xText = xText } }
+                ! []
 
-        NudgePosition ->
-            updatePosition (Vector.add model.position) model ! []
+        ( EditY yText, PositionEditor fields ) ->
+            { model | room = PositionEditor { fields | yText = yText } }
+                ! []
+
+        ( EditZ zText, PositionEditor fields ) ->
+            { model | room = PositionEditor { fields | zText = zText } }
+                ! []
+
+        _ ->
+            model ! []
 
 
-updatePosition : (Vector -> Vector) -> Model -> Model
-updatePosition transform model =
+updatePosition : (Vector -> Vector) -> Model -> PositionFields -> Model
+updatePosition transform model fields =
     let
         toFloat text =
             String.toFloat text
                 |> Result.withDefault 0
 
         vector =
-            Vector.vector (toFloat model.xText) (toFloat model.yText) (toFloat model.zText)
+            Vector.vector
+                (toFloat fields.xText)
+                (toFloat fields.yText)
+                (toFloat fields.zText)
     in
         { model | position = transform vector }
 
@@ -103,11 +121,11 @@ sidebar model =
             , ( "justify-content", "space-between" )
             ]
         ]
-        [ controlPanel, statusPanel model ]
+        [ controlPanel model, statusPanel model ]
 
 
-controlPanel : Html Action
-controlPanel =
+controlPanel : Model -> Html Action
+controlPanel model =
     let
         titleStyle =
             Attr.style
@@ -115,11 +133,37 @@ controlPanel =
                 , ( "font-weight", "normal" )
                 , ( "text-align", "center" )
                 ]
+
+        ( title, controls ) =
+            case model.room of
+                Entrance ->
+                    ( "Collision Test", entranceControls )
+
+                PositionEditor _ ->
+                    ( "Change Position", positionControls )
     in
         Html.div [ Attr.style [ ( "width", "200px" ) ] ]
-            [ Html.h1 [ titleStyle ] [ Html.text "Control Panel" ]
+            [ Html.h1 [ titleStyle ] [ Html.text title ]
             , Html.hr [ Attr.style [ ( "width", "80%" ) ] ] []
-            , positionControls
+            , controls
+            ]
+
+
+entranceControls : Html Action
+entranceControls =
+    let
+        openPositionEditor =
+            { xText = ""
+            , yText = ""
+            , zText = ""
+            }
+                |> PositionEditor
+                |> ChangeRoom
+    in
+        Html.div []
+            [ Html.button
+                [ Evt.onClick openPositionEditor ]
+                [ Html.text "Change Position" ]
             ]
 
 
@@ -131,6 +175,7 @@ positionControls =
         , inputField EditZ "Z = "
         , Html.button [ Evt.onClick SetPosition ] [ Html.text "Set position" ]
         , Html.button [ Evt.onClick NudgePosition ] [ Html.text "Nudge position" ]
+        , Html.button [ Evt.onClick (ChangeRoom Entrance) ] [ Html.text "Back" ]
         ]
 
 
