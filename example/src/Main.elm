@@ -10,6 +10,7 @@ import WebGL exposing (Drawable, Shader, Renderable)
 import Math.Vector3 as Vec3 exposing (Vec3)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Vector exposing (Vector)
+import Quaternion exposing (Quaternion)
 import Model exposing (Vertex)
 
 
@@ -151,6 +152,7 @@ sidebar model =
             [ ( "display", "flex" )
             , ( "flex-direction", "column" )
             , ( "justify-content", "space-between" )
+            , ( "width", "250px" )
             ]
         ]
         [ controlPanel model, statusPanel model ]
@@ -222,19 +224,36 @@ positionControls =
 
 inputField : (String -> msg) -> String -> Html msg
 inputField sendMsg label =
-    Html.div [ Attr.style [ ( "display", "flex" ) ] ]
-        [ Html.span [ Attr.style [ ( "flex", "none" ) ] ] [ Html.text label ]
+    Html.div []
+        [ Html.text label
         , Html.input [ Attr.size 10, Evt.onInput sendMsg ] []
         ]
 
 
 statusPanel : Model -> Html a
 statusPanel model =
-    Html.div []
-        [ divider
-        , displayPosition "#FF4137" model.redPosition
-        , displayPosition "#6F7AC5" model.bluePosition
-        ]
+    let
+        red =
+            "#FF4137"
+
+        blue =
+            "#6F7AC5"
+    in
+        Html.div []
+            [ divider
+            , Html.div
+                [ Attr.style
+                    [ ( "display", "flex" )
+                    , ( "flex-wrap", "wrap" )
+                    , ( "justify-content", "center" )
+                    ]
+                ]
+                [ displayPosition red model.redPosition
+                , displayOrientation red (Quaternion.quaternion 1 0 0 0)
+                , displayPosition blue model.bluePosition
+                , displayOrientation blue (Quaternion.quaternion 1 0 0 0)
+                ]
+            ]
 
 
 displayPosition : String -> Vector -> Html a
@@ -251,6 +270,25 @@ displayPosition cssColor position =
         , Html.text ("Y = " ++ float position.y)
         , Html.br [] []
         , Html.text ("Z = " ++ float position.z)
+        ]
+
+
+displayOrientation : String -> Quaternion -> Html a
+displayOrientation cssColor orientation =
+    Html.div
+        [ Attr.style
+            [ ( "color", cssColor )
+            , ( "font-weight", "bold" )
+            , ( "padding", "10px 15px" )
+            ]
+        ]
+        [ Html.text ("Qw = " ++ float orientation.scalar)
+        , Html.br [] []
+        , Html.text ("Qx = " ++ float orientation.vector.x)
+        , Html.br [] []
+        , Html.text ("Qy = " ++ float orientation.vector.y)
+        , Html.br [] []
+        , Html.text ("Qz = " ++ float orientation.vector.z)
         ]
 
 
