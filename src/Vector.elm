@@ -1,8 +1,9 @@
-module Vector exposing (Vector, vector, getX, getY, getZ, add, sub, negate, scale, dot, cross, normalize, direction, length, lengthSquared, distance, distanceSquared, equal, fromTuple, toTuple, unique, encode, decode)
+module Vector exposing (Vector, vector, identity, getX, getY, getZ, add, sub, negate, scale, dot, cross, normalize, direction, length, lengthSquared, distance, distanceSquared, equal, fromTuple, toTuple, unique, encode, decode, toVec3)
 
 import Set
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
+import Math.Vector3 as Vec3 exposing (Vec3)
 
 
 type alias Vector =
@@ -12,6 +13,11 @@ type alias Vector =
 vector : Float -> Float -> Float -> Vector
 vector x y z =
     { x = x, y = y, z = z }
+
+
+identity : Vector
+identity =
+    vector 0 0 0
 
 
 getX : Vector -> Float
@@ -67,15 +73,15 @@ cross u v =
         ((getX u * getY v) - (getY u * getX v))
 
 
-normalize : Vector -> Vector
+normalize : Vector -> Maybe Vector
 normalize v =
     if length v == 0 then
-        v
+        Nothing
     else
-        scale (1 / length v) v
+        Just (scale (1 / length v) v)
 
 
-direction : Vector -> Vector -> Vector
+direction : Vector -> Vector -> Maybe Vector
 direction u v =
     normalize (u `sub` v)
 
@@ -141,3 +147,8 @@ encode v =
 decode : Decoder Vector
 decode =
     Decode.tuple3 vector Decode.float Decode.float Decode.float
+
+
+toVec3 : Vector -> Vec3
+toVec3 =
+    Vec3.fromRecord

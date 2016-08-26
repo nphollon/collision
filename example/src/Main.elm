@@ -2,15 +2,18 @@ module Main exposing (main)
 
 import Array
 import String
+import Json.Decode as Json
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Evt
 import Html.App as App
+import InlineHover as Hov
 import WebGL exposing (Drawable, Shader, Renderable)
 import Math.Vector3 as Vec3 exposing (Vec3)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
+import Frame exposing (Frame)
 import Model exposing (Vertex)
 
 
@@ -26,18 +29,30 @@ main =
 
 type alias Model =
     { room : Room
-    , redPosition : Vector
-    , bluePosition : Vector
+    , redFrame : Frame
+    , blueFrame : Frame
     }
 
 
 type Room
     = Entrance
     | PositionEditor PositionFields
+    | OrientationEditor OrientationFields
 
 
 type alias PositionFields =
-    { xText : String, yText : String, zText : String, solid : Solid }
+    { xText : String
+    , yText : String
+    , zText : String
+    , solid : Solid
+    }
+
+
+type alias OrientationFields =
+    { angleText : String
+    , axis : Vector
+    , solid : Solid
+    }
 
 
 type Solid
@@ -49,16 +64,26 @@ type Action
     = EditX String
     | EditY String
     | EditZ String
+    | EditAngle String
+    | SetAxis Vector
     | ChangeRoom Room
     | SetPosition
     | NudgePosition
+    | Rotate
+    | ResetOrientation
 
 
 init : ( Model, Cmd Action )
 init =
     { room = Entrance
-    , redPosition = Vector.vector 0 0 0
-    , bluePosition = Vector.vector 0 0 -5
+    , redFrame =
+        { position = Vector.identity
+        , orientation = Quaternion.identity
+        }
+    , blueFrame =
+        { position = Vector.vector 0 0 -5
+        , orientation = Quaternion.identity
+        }
     }
         ! []
 
@@ -92,6 +117,20 @@ update action model =
             { model | room = PositionEditor { fields | zText = zText } }
                 ! []
 
+        ( EditAngle angleText, OrientationEditor fields ) ->
+            { model | room = OrientationEditor { fields | angleText = angleText } }
+                ! []
+
+        ( SetAxis axis, OrientationEditor fields ) ->
+            { model | room = OrientationEditor { fields | axis = axis } }
+                ! []
+
+        ( Rotate, OrientationEditor fields ) ->
+            rotate model fields ! []
+
+        ( ResetOrientation, OrientationEditor fields ) ->
+            resetOrientation model fields.solid ! []
+
         _ ->
             model ! []
 
@@ -99,42 +138,80 @@ update action model =
 setPosition : Model -> PositionFields -> Model
 setPosition model fields =
     let
-        newPosition =
-            parseVector fields
+        setPos frame =
+            { frame | position = parseVector fields }
     in
         case fields.solid of
             Red ->
-                { model | redPosition = newPosition }
+                { model | redFrame = setPos model.redFrame }
 
             Blue ->
-                { model | bluePosition = newPosition }
+                { model | blueFrame = setPos model.blueFrame }
 
 
 nudgePosition : Model -> PositionFields -> Model
 nudgePosition model fields =
     let
-        displacement =
-            parseVector fields
+        nudgePos frame =
+            { frame | position = Vector.add frame.position (parseVector fields) }
     in
         case fields.solid of
             Red ->
-                { model | redPosition = Vector.add model.redPosition displacement }
+                { model | redFrame = nudgePos model.redFrame }
 
             Blue ->
-                { model | bluePosition = Vector.add model.bluePosition displacement }
+                { model | blueFrame = nudgePos model.blueFrame }
+
+
+rotate : Model -> OrientationFields -> Model
+rotate model fields =
+    let
+        angle =
+            degrees (toFloat fields.angleText)
+
+        rotation =
+            Quaternion.fromAxisAngle fields.axis angle
+                |> Maybe.withDefault Quaternion.identity
+
+        nudgeOrientation frame =
+            { frame
+                | orientation = Quaternion.compose frame.orientation rotation
+            }
+    in
+        case fields.solid of
+            Red ->
+                { model | redFrame = nudgeOrientation model.redFrame }
+
+            Blue ->
+                { model | blueFrame = nudgeOrientation model.blueFrame }
+
+
+resetOrientation : Model -> Solid -> Model
+resetOrientation model solid =
+    let
+        reset frame =
+            { frame | orientation = Quaternion.identity }
+    in
+        case solid of
+            Red ->
+                { model | redFrame = reset model.redFrame }
+
+            Blue ->
+                { model | blueFrame = reset model.blueFrame }
 
 
 parseVector : PositionFields -> Vector
 parseVector fields =
-    let
-        toFloat text =
-            String.toFloat text
-                |> Result.withDefault 0
-    in
-        Vector.vector
-            (toFloat fields.xText)
-            (toFloat fields.yText)
-            (toFloat fields.zText)
+    Vector.vector
+        (toFloat fields.xText)
+        (toFloat fields.yText)
+        (toFloat fields.zText)
+
+
+toFloat : String -> Float
+toFloat text =
+    String.toFloat text
+        |> Result.withDefault 0
 
 
 view : Model -> Html Action
@@ -169,6 +246,9 @@ controlPanel model =
 
                 PositionEditor _ ->
                     ( "Change Position", positionControls )
+
+                OrientationEditor _ ->
+                    ( "Change Orientation", orientationControls )
     in
         Html.div
             [ Attr.style
@@ -183,11 +263,6 @@ controlPanel model =
             ]
 
 
-divider : Html a
-divider =
-    Html.hr [ Attr.style [ ( "width", "80%" ) ] ] []
-
-
 entranceControls : Html Action
 entranceControls =
     let
@@ -199,35 +274,121 @@ entranceControls =
             }
                 |> PositionEditor
                 |> ChangeRoom
+
+        editOrientationFor solid =
+            { angleText = ""
+            , axis = Vector.vector 1 0 0
+            , solid = solid
+            }
+                |> OrientationEditor
+                |> ChangeRoom
     in
-        Html.div []
-            [ Html.button
-                [ Evt.onClick (editPositionFor Red) ]
-                [ Html.text "Change Red Position" ]
-            , Html.button
-                [ Evt.onClick (editPositionFor Blue) ]
-                [ Html.text "Change Blue Position" ]
+        Html.div
+            [ Attr.style
+                [ ( "display", "flex" )
+                , ( "flex-wrap", "wrap" )
+                , ( "justify-content", "center" )
+                ]
+            ]
+            [ button (editPositionFor Red) "Red Position"
+            , button (editOrientationFor Red) "Red Orientation"
+            , spacer
+            , button (editPositionFor Blue) "Blue Position"
+            , button (editOrientationFor Blue) "Blue Orientation"
             ]
 
 
 positionControls : Html Action
 positionControls =
-    Html.div []
-        [ inputField EditX "X = "
-        , inputField EditY "Y = "
-        , inputField EditZ "Z = "
-        , Html.button [ Evt.onClick SetPosition ] [ Html.text "Set position" ]
-        , Html.button [ Evt.onClick NudgePosition ] [ Html.text "Nudge position" ]
-        , Html.button [ Evt.onClick (ChangeRoom Entrance) ] [ Html.text "Back" ]
+    Html.div
+        [ Attr.style
+            [ ( "display", "flex" )
+            , ( "flex-direction", "column" )
+            , ( "align-items", "center" )
+            ]
         ]
+        [ inputField EditX "X "
+        , inputField EditY "Y "
+        , inputField EditZ "Z "
+        , spacer
+        , button SetPosition "Set position"
+        , button NudgePosition "Nudge position"
+        , spacer
+        , backButton
+        ]
+
+
+orientationControls : Html Action
+orientationControls =
+    let
+        toAxis value =
+            if value == "y" then
+                SetAxis (Vector.vector 0 1 0)
+            else if value == "z" then
+                SetAxis (Vector.vector 0 0 1)
+            else
+                SetAxis (Vector.vector 1 0 0)
+    in
+        Html.div
+            [ Attr.style
+                [ ( "display", "flex" )
+                , ( "flex-direction", "column" )
+                , ( "align-items", "center" )
+                ]
+            ]
+            [ inputField EditAngle "Angle (Degrees) "
+            , Html.select [ Evt.on "change" (Json.map toAxis Evt.targetValue) ]
+                [ Html.option [ Attr.value "x" ] [ Html.text "X Axis" ]
+                , Html.option [ Attr.value "y" ] [ Html.text "Y Axis" ]
+                , Html.option [ Attr.value "z" ] [ Html.text "Z Axis" ]
+                ]
+            , spacer
+            , button Rotate "Rotate"
+            , button ResetOrientation "Reset"
+            , spacer
+            , backButton
+            ]
 
 
 inputField : (String -> msg) -> String -> Html msg
 inputField sendMsg label =
     Html.div []
         [ Html.text label
-        , Html.input [ Attr.size 10, Evt.onInput sendMsg ] []
+        , Html.input [ Attr.size 3, Evt.onInput sendMsg ] []
         ]
+
+
+backButton : Html Action
+backButton =
+    button (ChangeRoom Entrance) "Back"
+
+
+button : msg -> String -> Html msg
+button sendMsg label =
+    Hov.hover
+        [ ( "background-color", "#eeeeee" ) ]
+        Html.button
+        [ Evt.onClick sendMsg
+        , Attr.style
+            [ ( "background-color", "#ffffff" )
+            , ( "border", "none" )
+            , ( "width", "80%" )
+            , ( "font-size", "1rem" )
+            , ( "padding", "5px 10px" )
+            , ( "margin", "5px 0px" )
+            ]
+        ]
+        [ Html.text label ]
+
+
+divider : Html a
+divider =
+    Html.hr [ Attr.style [ ( "width", "80%" ) ] ] []
+
+
+spacer : Html a
+spacer =
+    Html.div [ Attr.style [ ( "width", "100%" ), ( "margin", "10px 0px" ) ] ] [ Html.text " " ]
 
 
 statusPanel : Model -> Html a
@@ -243,15 +404,15 @@ statusPanel model =
         Html.div [ Attr.style [ ( "width", "250px" ) ] ]
             [ Html.h2 [ titleStyle ] [ Html.text "Red" ]
             , divider
-            , displayFrame model.redPosition (Quaternion.quaternion 1 0 0 0)
+            , displayFrame model.redFrame
             , Html.h2 [ titleStyle ] [ Html.text "Blue" ]
             , divider
-            , displayFrame model.bluePosition (Quaternion.quaternion 1 0 0 0)
+            , displayFrame model.blueFrame
             ]
 
 
-displayFrame : Vector -> Quaternion -> Html a
-displayFrame position orientation =
+displayFrame : Frame -> Html a
+displayFrame frame =
     Html.div
         [ Attr.style
             [ ( "display", "flex" )
@@ -261,20 +422,20 @@ displayFrame position orientation =
             ]
         ]
         [ Html.div []
-            [ Html.text ("X = " ++ float position.x)
+            [ Html.text ("X = " ++ float frame.position.x)
             , Html.br [] []
-            , Html.text ("Y = " ++ float position.y)
+            , Html.text ("Y = " ++ float frame.position.y)
             , Html.br [] []
-            , Html.text ("Z = " ++ float position.z)
+            , Html.text ("Z = " ++ float frame.position.z)
             ]
         , Html.div []
-            [ Html.text ("Qw = " ++ float orientation.scalar)
+            [ Html.text ("Qw = " ++ float frame.orientation.scalar)
             , Html.br [] []
-            , Html.text ("Qx = " ++ float orientation.vector.x)
+            , Html.text ("Qx = " ++ float frame.orientation.vector.x)
             , Html.br [] []
-            , Html.text ("Qy = " ++ float orientation.vector.y)
+            , Html.text ("Qy = " ++ float frame.orientation.vector.y)
             , Html.br [] []
-            , Html.text ("Qz = " ++ float orientation.vector.z)
+            , Html.text ("Qz = " ++ float frame.orientation.vector.z)
             ]
         ]
 
@@ -313,14 +474,14 @@ world model =
         , Attr.height 500
         , Attr.style [ ( "background-color", "#d0f0ff" ) ]
         ]
-        [ drawSolid Red model.redPosition
-        , drawSolid Blue model.bluePosition
+        [ drawSolid Red model.redFrame
+        , drawSolid Blue model.blueFrame
         ]
 
 
-drawSolid : Solid -> Vector -> Renderable
-drawSolid solid position =
-    WebGL.render vertexShader fragmentShader cube (uniform solid position)
+drawSolid : Solid -> Frame -> Renderable
+drawSolid solid frame =
+    WebGL.render vertexShader fragmentShader cube (uniform solid frame)
 
 
 cube : Drawable Vertex
@@ -348,8 +509,8 @@ cube =
         }
 
 
-uniform : Solid -> Vector -> Uniform
-uniform solid position =
+uniform : Solid -> Frame -> Uniform
+uniform solid frame =
     let
         color =
             case solid of
@@ -367,8 +528,7 @@ uniform solid position =
                 |> Mat4.rotate (turns -0.125) (Vec3.vec3 0 1 0)
 
         placement =
-            Vec3.fromRecord position
-                |> Mat4.makeTranslate
+            Frame.toMat4 frame
     in
         { cameraPosition = Vec3.fromRecord cameraPosition
         , cameraOrientation = cameraOrientation

@@ -13,7 +13,8 @@
         "elm-community/elm-webgl": "3.0.3 <= v < 4.0.0",
         "elm-community/maybe-extra": "1.1.0 <= v < 2.0.0",
         "elm-lang/core": "4.0.5 <= v < 5.0.0",
-        "elm-lang/html": "1.1.0 <= v < 2.0.0"
+        "elm-lang/html": "1.1.0 <= v < 2.0.0",
+        "jinjor/elm-inline-hover": "1.0.1 <= v < 2.0.0"
     },
     "elm-version": "0.17.0 <= v < 0.18.0"
 }

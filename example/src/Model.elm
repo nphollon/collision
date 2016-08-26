@@ -23,7 +23,7 @@ type alias MeshData =
 drawable : MeshData -> Drawable Vertex
 drawable data =
     toFaces data
-        |> List.map toVertexTriangle
+        |> List.filterMap toVertexTriangle
         |> Triangle
 
 
@@ -47,15 +47,18 @@ toFaces { vertexPositions, vertexIndexes } =
             |> List.concatMap decomposePolygon
 
 
-toVertexTriangle : Face -> ( Vertex, Vertex, Vertex )
+toVertexTriangle : Face -> Maybe ( Vertex, Vertex, Vertex )
 toVertexTriangle face =
-    let
-        normal =
-            Vector.normalize (Face.cross face)
-    in
-        (,,) (toVertex face.p normal)
-            (toVertex face.q normal)
-            (toVertex face.r normal)
+    case Vector.normalize (Face.cross face) of
+        Nothing ->
+            Nothing
+
+        Just normal ->
+            Just
+                ( toVertex face.p normal
+                , toVertex face.q normal
+                , toVertex face.r normal
+                )
 
 
 toVertex : Vector -> Vector -> Vertex
