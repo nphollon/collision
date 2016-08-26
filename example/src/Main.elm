@@ -139,23 +139,17 @@ parseVector fields =
 
 view : Model -> Html Action
 view model =
-    Html.div [ Attr.style [ ( "display", "flex" ), ( "justify-content", "center" ) ] ]
-        [ sidebar model
-        , world model
-        ]
-
-
-sidebar : Model -> Html Action
-sidebar model =
     Html.div
         [ Attr.style
             [ ( "display", "flex" )
-            , ( "flex-direction", "column" )
-            , ( "justify-content", "space-between" )
-            , ( "width", "250px" )
+            , ( "flex-wrap", "wrap" )
+            , ( "justify-content", "center" )
             ]
         ]
-        [ controlPanel model, statusPanel model ]
+        [ controlPanel model
+        , world model
+        , statusPanel model
+        ]
 
 
 controlPanel : Model -> Html Action
@@ -176,7 +170,13 @@ controlPanel model =
                 PositionEditor _ ->
                     ( "Change Position", positionControls )
     in
-        Html.div [ Attr.style [ ( "width", "200px" ) ] ]
+        Html.div
+            [ Attr.style
+                [ ( "display", "flex" )
+                , ( "flex-direction", "column" )
+                , ( "width", "200px" )
+                ]
+            ]
             [ Html.h1 [ titleStyle ] [ Html.text title ]
             , divider
             , controls
@@ -233,62 +233,49 @@ inputField sendMsg label =
 statusPanel : Model -> Html a
 statusPanel model =
     let
-        red =
-            "#FF4137"
-
-        blue =
-            "#6F7AC5"
+        titleStyle =
+            Attr.style
+                [ ( "font-size", "1.2rem" )
+                , ( "font-weight", "normal" )
+                , ( "text-align", "center" )
+                ]
     in
-        Html.div []
-            [ divider
-            , Html.div
-                [ Attr.style
-                    [ ( "display", "flex" )
-                    , ( "flex-wrap", "wrap" )
-                    , ( "justify-content", "center" )
-                    ]
-                ]
-                [ displayPosition red model.redPosition
-                , displayOrientation red (Quaternion.quaternion 1 0 0 0)
-                , displayPosition blue model.bluePosition
-                , displayOrientation blue (Quaternion.quaternion 1 0 0 0)
-                ]
+        Html.div [ Attr.style [ ( "width", "250px" ) ] ]
+            [ Html.h2 [ titleStyle ] [ Html.text "Red" ]
+            , divider
+            , displayFrame model.redPosition (Quaternion.quaternion 1 0 0 0)
+            , Html.h2 [ titleStyle ] [ Html.text "Blue" ]
+            , divider
+            , displayFrame model.bluePosition (Quaternion.quaternion 1 0 0 0)
             ]
 
 
-displayPosition : String -> Vector -> Html a
-displayPosition cssColor position =
+displayFrame : Vector -> Quaternion -> Html a
+displayFrame position orientation =
     Html.div
         [ Attr.style
-            [ ( "color", cssColor )
-            , ( "font-weight", "bold" )
-            , ( "padding", "10px 15px" )
+            [ ( "display", "flex" )
+            , ( "flex-wrap", "wrap" )
+            , ( "justify-content", "space-around" )
+            , ( "margin-bottom", "25px" )
             ]
         ]
-        [ Html.text ("X = " ++ float position.x)
-        , Html.br [] []
-        , Html.text ("Y = " ++ float position.y)
-        , Html.br [] []
-        , Html.text ("Z = " ++ float position.z)
-        ]
-
-
-displayOrientation : String -> Quaternion -> Html a
-displayOrientation cssColor orientation =
-    Html.div
-        [ Attr.style
-            [ ( "color", cssColor )
-            , ( "font-weight", "bold" )
-            , ( "padding", "10px 15px" )
+        [ Html.div []
+            [ Html.text ("X = " ++ float position.x)
+            , Html.br [] []
+            , Html.text ("Y = " ++ float position.y)
+            , Html.br [] []
+            , Html.text ("Z = " ++ float position.z)
             ]
-        ]
-        [ Html.text ("Qw = " ++ float orientation.scalar)
-        , Html.br [] []
-        , Html.text ("Qx = " ++ float orientation.vector.x)
-        , Html.br [] []
-        , Html.text ("Qy = " ++ float orientation.vector.y)
-        , Html.br [] []
-        , Html.text ("Qz = " ++ float orientation.vector.z)
+        , Html.div []
+            [ Html.text ("Qw = " ++ float orientation.scalar)
+            , Html.br [] []
+            , Html.text ("Qx = " ++ float orientation.vector.x)
+            , Html.br [] []
+            , Html.text ("Qy = " ++ float orientation.vector.y)
+            , Html.br [] []
+            , Html.text ("Qz = " ++ float orientation.vector.z)
+            ]
         ]
 
 
