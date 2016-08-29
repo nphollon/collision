@@ -19,9 +19,8 @@ import Model exposing (Vertex)
 
 main : Program Never
 main =
-    App.program
-        { init = init
-        , subscriptions = subscriptions
+    App.beginnerProgram
+        { model = init
         , update = update
         , view = view
         }
@@ -73,7 +72,7 @@ type Action
     | ResetOrientation
 
 
-init : ( Model, Cmd Action )
+init : Model
 init =
     { room = Entrance
     , redFrame = Frame.identity
@@ -82,54 +81,43 @@ init =
         , orientation = Quaternion.identity
         }
     }
-        ! []
 
 
-subscriptions : Model -> Sub Action
-subscriptions model =
-    Sub.none
-
-
-update : Action -> Model -> ( Model, Cmd Action )
+update : Action -> Model -> Model
 update action model =
     case ( action, model.room ) of
         ( ChangeRoom room, _ ) ->
-            { model | room = room } ! []
+            { model | room = room }
 
         ( EditX xText, PositionEditor fields ) ->
             { model | room = PositionEditor { fields | xText = xText } }
-                ! []
 
         ( EditY yText, PositionEditor fields ) ->
             { model | room = PositionEditor { fields | yText = yText } }
-                ! []
 
         ( EditZ zText, PositionEditor fields ) ->
             { model | room = PositionEditor { fields | zText = zText } }
-                ! []
 
         ( EditAngle angleText, OrientationEditor fields ) ->
             { model | room = OrientationEditor { fields | angleText = angleText } }
-                ! []
 
         ( SetAxis axis, OrientationEditor fields ) ->
             { model | room = OrientationEditor { fields | axis = axis } }
-                ! []
 
         ( SetPosition, PositionEditor fields ) ->
-            updateSolid setPosition fields model ! []
+            updateSolid setPosition fields model
 
         ( NudgePosition, PositionEditor fields ) ->
-            updateSolid nudge fields model ! []
+            updateSolid nudge fields model
 
         ( Rotate, OrientationEditor fields ) ->
-            updateSolid rotate fields model ! []
+            updateSolid rotate fields model
 
         ( ResetOrientation, OrientationEditor fields ) ->
-            updateSolid resetOrientation fields model ! []
+            updateSolid resetOrientation fields model
 
         _ ->
-            model ! []
+            model
 
 
 type alias WithSolid a =
