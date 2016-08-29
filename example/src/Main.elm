@@ -67,8 +67,10 @@ type Action
     | SetAxis Vector
     | ChangeRoom Room
     | SetPosition
-    | NudgePosition
-    | Rotate
+    | ExtrinsicNudge
+    | IntrinsicNudge
+    | ExtrinsicRotate
+    | IntrinsicRotate
     | ResetOrientation
 
 
@@ -105,16 +107,40 @@ update action model =
             { model | room = OrientationEditor { fields | axis = axis } }
 
         ( SetPosition, PositionEditor fields ) ->
-            updateSolid setPosition fields model
+            updateSolid
+                (parseVector >> Frame.setPosition)
+                fields
+                model
 
-        ( NudgePosition, PositionEditor fields ) ->
-            updateSolid nudge fields model
+        ( ExtrinsicNudge, PositionEditor fields ) ->
+            updateSolid
+                (parseVector >> Frame.extrinsicNudge)
+                fields
+                model
 
-        ( Rotate, OrientationEditor fields ) ->
-            updateSolid rotate fields model
+        ( IntrinsicNudge, PositionEditor fields ) ->
+            updateSolid
+                (parseVector >> Frame.intrinsicNudge)
+                fields
+                model
+
+        ( ExtrinsicRotate, OrientationEditor fields ) ->
+            updateSolid
+                (parseRotation >> Frame.extrinsicRotate)
+                fields
+                model
+
+        ( IntrinsicRotate, OrientationEditor fields ) ->
+            updateSolid
+                (parseRotation >> Frame.intrinsicRotate)
+                fields
+                model
 
         ( ResetOrientation, OrientationEditor fields ) ->
-            updateSolid resetOrientation fields model
+            updateSolid
+                (always (Frame.setOrientation Quaternion.identity))
+                fields
+                model
 
         _ ->
             model
@@ -134,35 +160,19 @@ updateSolid transform fields model =
             { model | blueFrame = transform fields model.blueFrame }
 
 
-setPosition : PositionFields -> Frame -> Frame
-setPosition fields =
-    Frame.setPosition (parseVector fields)
-
-
-nudge : PositionFields -> Frame -> Frame
-nudge fields =
-    Frame.extrinsicNudge (parseVector fields)
-
-
-rotate : OrientationFields -> Frame -> Frame
-rotate fields =
-    degrees (toFloat fields.angleText)
-        |> Quaternion.fromAxisAngle fields.axis
-        |> Maybe.withDefault Quaternion.identity
-        |> Frame.extrinsicRotate
-
-
-resetOrientation : OrientationFields -> Frame -> Frame
-resetOrientation =
-    always (Frame.setOrientation Quaternion.identity)
-
-
 parseVector : PositionFields -> Vector
 parseVector fields =
     Vector.vector
         (toFloat fields.xText)
         (toFloat fields.yText)
         (toFloat fields.zText)
+
+
+parseRotation : OrientationFields -> Quaternion
+parseRotation fields =
+    degrees (toFloat fields.angleText)
+        |> Quaternion.fromAxisAngle fields.axis
+        |> Maybe.withDefault Quaternion.identity
 
 
 toFloat : String -> Float
@@ -268,8 +278,9 @@ positionControls =
         , inputField EditY "Y "
         , inputField EditZ "Z "
         , spacer
-        , button SetPosition "Set position"
-        , button NudgePosition "Nudge position"
+        , button SetPosition "Set Position"
+        , button ExtrinsicNudge "Extrinsic Nudge"
+        , button IntrinsicNudge "Intrinsic Nudge"
         , spacer
         , backButton
         ]
@@ -300,7 +311,8 @@ orientationControls =
                 , Html.option [ Attr.value "z" ] [ Html.text "Z Axis" ]
                 ]
             , spacer
-            , button Rotate "Rotate"
+            , button ExtrinsicRotate "Extrinsic Rotate"
+            , button IntrinsicRotate "Intrinsic Rotate"
             , button ResetOrientation "Reset"
             , spacer
             , backButton
