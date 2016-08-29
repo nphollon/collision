@@ -1,4 +1,4 @@
-module Quaternion exposing (Quaternion, toVector, fromVector, fromBasis, fromAxisAngle, compose, rotateVector, quaternion, conjugate, encode, decode, scale, identity, negate, toMat4, rotateX, rotateY, rotateZ)
+module Quaternion exposing (Quaternion, toVector, fromVector, fromBasis, fromAxisAngle, compose, rotateVector, rotationFor, quaternion, conjugate, encode, decode, scale, identity, negate, toMat4, rotateX, rotateY, rotateZ)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
@@ -102,6 +102,29 @@ rotateVector q v =
         compose vectorQuat q
             |> compose (conjugate q)
             |> .vector
+
+
+rotationFor : Vector -> Vector -> Quaternion
+rotationFor u v =
+    let
+        cross =
+            Vector.cross u v
+
+        crossMag =
+            Vector.length cross
+
+        angle =
+            atan2 crossMag (Vector.dot u v)
+    in
+        if angle == 0 then
+            identity
+        else if crossMag == 0 then
+            Vector.vector 1.0e-10 0 0
+                |> Vector.add v
+                |> rotationFor u
+        else
+            Vector.scale (angle / crossMag) cross
+                |> fromVector
 
 
 conjugate : Quaternion -> Quaternion

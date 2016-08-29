@@ -76,10 +76,7 @@ type Action
 init : ( Model, Cmd Action )
 init =
     { room = Entrance
-    , redFrame =
-        { position = Vector.identity
-        , orientation = Quaternion.identity
-        }
+    , redFrame = Frame.identity
     , blueFrame =
         { position = Vector.vector 0 0 -5
         , orientation = Quaternion.identity
@@ -98,12 +95,6 @@ update action model =
     case ( action, model.room ) of
         ( ChangeRoom room, _ ) ->
             { model | room = room } ! []
-
-        ( SetPosition, PositionEditor fields ) ->
-            setPosition model fields ! []
-
-        ( NudgePosition, PositionEditor fields ) ->
-            nudgePosition model fields ! []
 
         ( EditX xText, PositionEditor fields ) ->
             { model | room = PositionEditor { fields | xText = xText } }
@@ -125,79 +116,57 @@ update action model =
             { model | room = OrientationEditor { fields | axis = axis } }
                 ! []
 
+        ( SetPosition, PositionEditor fields ) ->
+            updateSolid setPosition fields model ! []
+
+        ( NudgePosition, PositionEditor fields ) ->
+            updateSolid nudge fields model ! []
+
         ( Rotate, OrientationEditor fields ) ->
-            rotate model fields ! []
+            updateSolid rotate fields model ! []
 
         ( ResetOrientation, OrientationEditor fields ) ->
-            resetOrientation model fields.solid ! []
+            updateSolid resetOrientation fields model ! []
 
         _ ->
             model ! []
 
 
-setPosition : Model -> PositionFields -> Model
-setPosition model fields =
-    let
-        setPos frame =
-            { frame | position = parseVector fields }
-    in
-        case fields.solid of
-            Red ->
-                { model | redFrame = setPos model.redFrame }
-
-            Blue ->
-                { model | blueFrame = setPos model.blueFrame }
+type alias WithSolid a =
+    { a | solid : Solid }
 
 
-nudgePosition : Model -> PositionFields -> Model
-nudgePosition model fields =
-    let
-        nudgePos frame =
-            { frame | position = Vector.add frame.position (parseVector fields) }
-    in
-        case fields.solid of
-            Red ->
-                { model | redFrame = nudgePos model.redFrame }
+updateSolid : (WithSolid a -> Frame -> Frame) -> WithSolid a -> Model -> Model
+updateSolid transform fields model =
+    case fields.solid of
+        Red ->
+            { model | redFrame = transform fields model.redFrame }
 
-            Blue ->
-                { model | blueFrame = nudgePos model.blueFrame }
+        Blue ->
+            { model | blueFrame = transform fields model.blueFrame }
 
 
-rotate : Model -> OrientationFields -> Model
-rotate model fields =
-    let
-        angle =
-            degrees (toFloat fields.angleText)
-
-        rotation =
-            Quaternion.fromAxisAngle fields.axis angle
-                |> Maybe.withDefault Quaternion.identity
-
-        nudgeOrientation frame =
-            { frame
-                | orientation = Quaternion.compose frame.orientation rotation
-            }
-    in
-        case fields.solid of
-            Red ->
-                { model | redFrame = nudgeOrientation model.redFrame }
-
-            Blue ->
-                { model | blueFrame = nudgeOrientation model.blueFrame }
+setPosition : PositionFields -> Frame -> Frame
+setPosition fields =
+    Frame.setPosition (parseVector fields)
 
 
-resetOrientation : Model -> Solid -> Model
-resetOrientation model solid =
-    let
-        reset frame =
-            { frame | orientation = Quaternion.identity }
-    in
-        case solid of
-            Red ->
-                { model | redFrame = reset model.redFrame }
+nudge : PositionFields -> Frame -> Frame
+nudge fields =
+    Frame.extrinsicNudge (parseVector fields)
 
-            Blue ->
-                { model | blueFrame = reset model.blueFrame }
+
+rotate : OrientationFields -> Frame -> Frame
+rotate fields =
+    degrees (toFloat fields.angleText)
+        |> Quaternion.fromAxisAngle fields.axis
+        |> Maybe.withDefault Quaternion.identity
+        |> Frame.extrinsicRotate
+
+
+resetOrientation : OrientationFields -> Frame -> Frame
+resetOrientation =
+    always (Frame.setOrientation Quaternion.identity)
 
 
 parseVector : PositionFields -> Vector
@@ -277,7 +246,7 @@ entranceControls =
 
         editOrientationFor solid =
             { angleText = ""
-            , axis = Vector.vector 1 0 0
+            , axis = Vector.xAxis
             , solid = solid
             }
                 |> OrientationEditor
@@ -323,11 +292,11 @@ orientationControls =
     let
         toAxis value =
             if value == "y" then
-                SetAxis (Vector.vector 0 1 0)
+                SetAxis Vector.yAxis
             else if value == "z" then
-                SetAxis (Vector.vector 0 0 1)
+                SetAxis Vector.zAxis
             else
-                SetAxis (Vector.vector 1 0 0)
+                SetAxis Vector.xAxis
     in
         Html.div
             [ Attr.style

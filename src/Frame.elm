@@ -1,4 +1,4 @@
-module Frame exposing (Frame, identity, rotationFor, transformInto, transformOutOf, add, toMat4, compose, composeDelta, position, velocity, orientation, angVelocity, distance, bearing)
+module Frame exposing (Frame, identity, transformInto, transformOutOf, add, toMat4, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate)
 
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Vector exposing (Vector)
@@ -8,13 +8,6 @@ import Quaternion exposing (Quaternion)
 type alias Frame =
     { position : Vector
     , orientation : Quaternion
-    }
-
-
-type alias Moving a =
-    { a
-        | frame : Frame
-        , delta : Frame
     }
 
 
@@ -29,29 +22,6 @@ identity =
     { position = Vector.identity
     , orientation = Quaternion.identity
     }
-
-
-rotationFor : Vector -> Vector -> Quaternion
-rotationFor u v =
-    let
-        cross =
-            Vector.cross u v
-
-        crossMag =
-            Vector.length cross
-
-        angle =
-            atan2 crossMag (Vector.dot u v)
-    in
-        if angle == 0 then
-            Quaternion.identity
-        else if crossMag == 0 then
-            Vector.vector 1.0e-10 0 0
-                |> Vector.add v
-                |> rotationFor u
-        else
-            Vector.scale (angle / crossMag) cross
-                |> Quaternion.fromVector
 
 
 transformInto : Frame -> Vector -> Vector
@@ -81,45 +51,38 @@ compose parent child =
     }
 
 
-composeDelta : Moving a -> Frame -> Frame
-composeDelta parent childDelta =
-    { position =
-        childDelta.position
-            |> Quaternion.rotateVector (orientation parent)
-            |> Vector.add (velocity parent)
-    , orientation =
-        childDelta.orientation
+setPosition : Vector -> Frame -> Frame
+setPosition newPosition frame =
+    { frame | position = newPosition }
+
+
+intrinsicNudge : Vector -> Frame -> Frame
+intrinsicNudge delta frame =
+    { frame
+        | position =
+            Vector.add frame.position
+                (Quaternion.rotateVector frame.orientation delta)
     }
 
 
-position : Moving a -> Vector
-position body =
-    body.frame.position
+extrinsicNudge : Vector -> Frame -> Frame
+extrinsicNudge delta frame =
+    { frame
+        | position =
+            Vector.add frame.position delta
+    }
 
 
-velocity : Moving a -> Vector
-velocity body =
-    body.delta.position
+setOrientation : Quaternion -> Frame -> Frame
+setOrientation newOrientation frame =
+    { frame | orientation = newOrientation }
 
 
-orientation : Moving a -> Quaternion
-orientation body =
-    body.frame.orientation
+intrinsicRotate : Quaternion -> Frame -> Frame
+intrinsicRotate delta frame =
+    { frame | orientation = Quaternion.compose delta frame.orientation }
 
 
-angVelocity : Moving a -> Quaternion
-angVelocity body =
-    body.delta.orientation
-
-
-distance : Moving a -> Moving a -> Float
-distance a b =
-    Vector.distance (position a) (position b)
-
-
-bearing : Moving a -> Moving b -> Float
-bearing viewer target =
-    transformInto viewer.frame (position target)
-        |> Vector.normalize
-        |> Maybe.map (Vector.dot (Vector.vector 0 0 -1) >> acos)
-        |> Maybe.withDefault 0
+extrinsicRotate : Quaternion -> Frame -> Frame
+extrinsicRotate delta frame =
+    { frame | orientation = Quaternion.compose frame.orientation delta }

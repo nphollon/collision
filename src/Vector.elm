@@ -1,4 +1,4 @@
-module Vector exposing (Vector, vector, identity, getX, getY, getZ, add, sub, negate, scale, dot, cross, normalize, direction, length, lengthSquared, distance, distanceSquared, equal, fromTuple, toTuple, unique, encode, decode, toVec3)
+module Vector exposing (Vector, vector, identity, xAxis, yAxis, zAxis, getX, getY, getZ, add, sub, negate, scale, dot, cross, normalize, direction, length, lengthSquared, distance, distanceSquared, equal, fromTuple, toTuple, unique, encode, decode, toVec3)
 
 import Set
 import Json.Encode as Encode exposing (Value)
@@ -18,6 +18,21 @@ vector x y z =
 identity : Vector
 identity =
     vector 0 0 0
+
+
+xAxis : Vector
+xAxis =
+    vector 1 0 0
+
+
+yAxis : Vector
+yAxis =
+    vector 0 1 0
+
+
+zAxis : Vector
+zAxis =
+    vector 0 0 1
 
 
 getX : Vector -> Float
