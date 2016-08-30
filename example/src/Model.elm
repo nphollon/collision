@@ -3,9 +3,13 @@ module Model exposing (drawable, Vertex, MeshData)
 import Array exposing (Array)
 import Maybe.Extra as MaybeX
 import Math.Vector3 as Vec3 exposing (Vec3)
+import WebGL exposing (Drawable(..))
+
+
+-- Collision Library
+
 import Vector exposing (Vector)
 import Face exposing (Face)
-import WebGL exposing (Drawable(..))
 
 
 type alias Vertex =
