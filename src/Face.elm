@@ -1,8 +1,9 @@
-module Face exposing (Face, FaceFacts, face, getFacts, vertexList, vertexTuple, cross, collide, encode, decode)
+module Face exposing (Face, FaceFacts, face, getFacts, vertexList, vertexTuple, cross, collide, encode, decode, transformInto)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
 import Vector exposing (Vector)
+import Frame exposing (Frame)
 
 
 type alias Face =
@@ -24,6 +25,14 @@ type alias FaceFacts =
     { face : Face
     , area : Float
     , center : Vector
+    }
+
+
+transformInto : Frame -> Face -> Face
+transformInto frame face =
+    { p = Frame.transformInto frame face.p
+    , q = Frame.transformInto frame face.q
+    , r = Frame.transformInto frame face.r
     }
 
 

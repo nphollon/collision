@@ -181,6 +181,7 @@ convergeToEigenvector iter matrix guess =
     let
         nextVector =
             Vector.normalize (transform matrix guess.vector)
+                |> Maybe.withDefault guess.vector
 
         nextValue =
             rayleighQuotient matrix nextVector

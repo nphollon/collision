@@ -3,6 +3,7 @@ module OBBTreeTest exposing (testSuite)
 import ElmTest exposing (..)
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
+import Frame
 import Tree exposing (Tree(..))
 import Face as Face
 import OBBTree exposing (Body)
@@ -24,8 +25,7 @@ collideSuite =
                 { a = 3
                 , b = 2
                 , c = 1
-                , position = Vector.vector 0 0 0
-                , orientation = Quaternion.fromVector (Vector.vector 0 0 0)
+                , frame = Frame.identity
                 }
                 (Leaf
                     { p = Vector.vector 3 2 1
@@ -49,40 +49,28 @@ collideSuite =
                 (OBBTree.collide { a | bounds = box } { b | bounds = box })
     in
         suite "Body collisions"
-            [ test "bodies that do not collide"
-                <| assertMiss
-                    { defaultBody
-                        | position = Vector.vector 0 0 0
-                    }
-                    { defaultBody
-                        | position = Vector.vector 10 0 0
-                    }
-            , test "aligned bodies that do collide"
-                <| assertHit
-                    { defaultBody
-                        | position = Vector.vector 0 0 0
-                    }
-                    { defaultBody
-                        | position = Vector.vector 1 0 0
-                    }
-            , test "unaligned bodies that do collide"
-                <| assertHit
-                    { defaultBody
-                        | orientation = Quaternion.fromVector (Vector.vector (degrees -36.9) 0 0)
-                    }
-                    { defaultBody
-                        | orientation = Quaternion.fromVector (Vector.vector 0 (degrees 20.8) 0)
-                    }
-            , test "unaligned bodies that do not collide"
-                <| assertMiss
-                    { defaultBody
-                        | position = Vector.vector 0 0 -2
-                        , orientation = Quaternion.fromVector (Vector.vector (degrees -36.8) 0 0)
-                    }
-                    { defaultBody
-                        | position = Vector.vector 0 0 2
-                        , orientation = Quaternion.fromVector (Vector.vector 0 (degrees 20.7) 0)
-                    }
+            [ test "bodies that do not collide" <|
+                assertMiss
+                    defaultBody
+                    (setPosition (Vector.vector 10 0 0) defaultBody)
+            , test "aligned bodies that do collide" <|
+                assertHit
+                    defaultBody
+                    (setPosition (Vector.vector 1 0 0) defaultBody)
+            , test "unaligned bodies that do collide" <|
+                assertHit
+                    (setOrientation (Quaternion.rotateX (degrees -36.9)) defaultBody)
+                    (setOrientation (Quaternion.rotateY (degrees 20.8)) defaultBody)
+            , test "unaligned bodies that do not collide" <|
+                assertMiss
+                    (defaultBody
+                        |> setPosition (Vector.vector 0 0 -2)
+                        |> setOrientation (Quaternion.rotateX (degrees -36.8))
+                    )
+                    (defaultBody
+                        |> setPosition (Vector.vector 0 0 2)
+                        |> setOrientation (Quaternion.rotateY (degrees 20.7))
+                    )
             ]
 
 
@@ -124,8 +112,8 @@ projectAndSplitSuite =
             OBBTree.projectAndSplit (Vector.vector 1 0 0)
     in
         suite "Box splitting"
-            [ test "split fails if projections are identical"
-                <| assertEqual Nothing
+            [ test "split fails if projections are identical" <|
+                assertEqual Nothing
                     (projectAndSplit
                         [ facts 1 one
                         , facts 1 two
@@ -134,8 +122,8 @@ projectAndSplitSuite =
                         , facts 1 five
                         ]
                     )
-            , test "split halfway point if projections are different and list size is even"
-                <| assertEqual (Just ( [ one, two ], [ three, four ] ))
+            , test "split halfway point if projections are different and list size is even" <|
+                assertEqual (Just ( [ one, two ], [ three, four ] ))
                     (projectAndSplit
                         [ facts 1 one
                         , facts 2 two
@@ -143,8 +131,8 @@ projectAndSplitSuite =
                         , facts 4 four
                         ]
                     )
-            , test "split just after halfway point if projections are different and list size is odd"
-                <| assertEqual (Just ( [ one, two, three ], [ four, five ] ))
+            , test "split just after halfway point if projections are different and list size is odd" <|
+                assertEqual (Just ( [ one, two, three ], [ four, five ] ))
                     (projectAndSplit
                         [ facts 1 one
                         , facts 2 two
@@ -153,8 +141,8 @@ projectAndSplitSuite =
                         , facts 5 five
                         ]
                     )
-            , test "split by value if 4 items of lower and 1 of higher"
-                <| assertEqual (Just ( [ one, two, three, four ], [ five ] ))
+            , test "split by value if 4 items of lower and 1 of higher" <|
+                assertEqual (Just ( [ one, two, three, four ], [ five ] ))
                     (projectAndSplit
                         [ facts 1 one
                         , facts 1 two
@@ -163,8 +151,8 @@ projectAndSplitSuite =
                         , facts 2 five
                         ]
                     )
-            , test "split by value if 3 items of lower and 2 of higher"
-                <| assertEqual (Just ( [ one, two, three ], [ four, five ] ))
+            , test "split by value if 3 items of lower and 2 of higher" <|
+                assertEqual (Just ( [ one, two, three ], [ four, five ] ))
                     (projectAndSplit
                         [ facts 1 one
                         , facts 1 two
@@ -173,8 +161,8 @@ projectAndSplitSuite =
                         , facts 2 five
                         ]
                     )
-            , test "split by value if 2 items of lower and 3 of higher"
-                <| assertEqual (Just ( [ one, two ], [ three, four, five ] ))
+            , test "split by value if 2 items of lower and 3 of higher" <|
+                assertEqual (Just ( [ one, two ], [ three, four, five ] ))
                     (projectAndSplit
                         [ facts 1 one
                         , facts 1 two
@@ -183,8 +171,8 @@ projectAndSplitSuite =
                         , facts 2 five
                         ]
                     )
-            , test "split by value if 1 item of lower and 4 of higher"
-                <| assertEqual (Just ( [ one ], [ two, three, four, five ] ))
+            , test "split by value if 1 item of lower and 4 of higher" <|
+                assertEqual (Just ( [ one ], [ two, three, four, five ] ))
                     (projectAndSplit
                         [ facts 1 one
                         , facts 2 two
@@ -193,8 +181,8 @@ projectAndSplitSuite =
                         , facts 2 five
                         ]
                     )
-            , test "median group goes to first half even if split is very unbalanced"
-                <| assertEqual (Just ( [ one, two, three, four ], [ five ] ))
+            , test "median group goes to first half even if split is very unbalanced" <|
+                assertEqual (Just ( [ one, two, three, four ], [ five ] ))
                     (projectAndSplit
                         [ facts 1 one
                         , facts 1 two
@@ -203,8 +191,8 @@ projectAndSplitSuite =
                         , facts 3 five
                         ]
                     )
-            , test "median group goes to first half even if split is unbalanced"
-                <| assertEqual (Just ( [ one, two, three ], [ four, five ] ))
+            , test "median group goes to first half even if split is unbalanced" <|
+                assertEqual (Just ( [ one, two, three ], [ four, five ] ))
                     (projectAndSplit
                         [ facts 1 one
                         , facts 2 two
@@ -213,8 +201,8 @@ projectAndSplitSuite =
                         , facts 3 five
                         ]
                     )
-            , test "tolerance in floating point comparisons"
-                <| assertEqual Nothing
+            , test "tolerance in floating point comparisons" <|
+                assertEqual Nothing
                     (projectAndSplit
                         [ facts 0 one
                         , facts 1.0e-10 two
@@ -226,7 +214,16 @@ projectAndSplitSuite =
 
 defaultBody : Body {}
 defaultBody =
-    { position = Vector.vector 0 0 0
-    , orientation = Quaternion.fromVector (Vector.vector 0 0 0)
+    { frame = Frame.identity
     , bounds = OBBTree.empty
     }
+
+
+setPosition : Vector -> Body a -> Body a
+setPosition p box =
+    { box | frame = Frame.setPosition p box.frame }
+
+
+setOrientation : Quaternion -> Body a -> Body a
+setOrientation q box =
+    { box | frame = Frame.setOrientation q box.frame }

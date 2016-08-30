@@ -11,6 +11,7 @@ import InlineHover as Hov
 import WebGL exposing (Drawable, Shader, Renderable)
 import Math.Vector3 as Vec3 exposing (Vec3)
 import Math.Matrix4 as Mat4 exposing (Mat4)
+import Collision exposing (Bounds)
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
 import Frame exposing (Frame)
@@ -29,7 +30,9 @@ main =
 type alias Model =
     { room : Room
     , redFrame : Frame
+    , redBounds : Bounds
     , blueFrame : Frame
+    , blueBounds : Bounds
     }
 
 

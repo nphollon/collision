@@ -4,7 +4,7 @@ import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
-import Transform
+import Frame exposing (Frame)
 import Hull
 import Face exposing (Face)
 import Covariance exposing (Covariance)
@@ -14,8 +14,7 @@ type alias BoundingBox =
     { a : Float
     , b : Float
     , c : Float
-    , position : Vector
-    , orientation : Quaternion
+    , frame : Frame
     }
 
 
@@ -25,25 +24,28 @@ encode box =
         [ ( "a", Encode.float box.a )
         , ( "b", Encode.float box.b )
         , ( "c", Encode.float box.c )
-        , ( "position", Vector.encode box.position )
-        , ( "orientation", Quaternion.encode box.orientation )
+        , ( "position", Vector.encode box.frame.position )
+        , ( "orientation", Quaternion.encode box.frame.orientation )
         ]
 
 
 decode : Decoder BoundingBox
 decode =
-    (Decode.object5 BoundingBox) ("a" := Decode.float)
+    Decode.object4 BoundingBox
+        ("a" := Decode.float)
         ("b" := Decode.float)
         ("c" := Decode.float)
-        ("position" := Vector.decode)
-        ("orientation" := Quaternion.decode)
+        (Decode.object2 Frame
+            ("position" := Vector.decode)
+            ("orientation" := Quaternion.decode)
+        )
 
 
 collideWithFace : Face -> BoundingBox -> Bool
 collideWithFace face box =
     let
         transformedFace =
-            Transform.faceToBodyFrame box face
+            Face.transformInto box.frame face
 
         ppp =
             Vector.vector box.a box.b box.c
@@ -89,11 +91,11 @@ collide : BoundingBox -> BoundingBox -> Bool
 collide boxA boxB =
     let
         t =
-            Transform.toBodyFrame boxA boxB.position
+            Frame.transformInto boxA.frame boxB.frame.position
 
         rotation =
-            Quaternion.conjugate boxA.orientation
-                |> Quaternion.compose boxB.orientation
+            Quaternion.conjugate boxA.frame.orientation
+                |> Quaternion.compose boxB.frame.orientation
 
         r1 =
             Quaternion.rotateVector rotation (Vector.vector 1 0 0)
@@ -219,7 +221,10 @@ create faces =
 
         center =
             facts
-                |> List.foldl (\fact -> Vector.scale (fact.area) fact.center |> Vector.add)
+                |> List.foldl
+                    (\fact ->
+                        Vector.add (Vector.scale (fact.area) fact.center)
+                    )
                     (Vector.vector 0 0 0)
                 |> Vector.scale (1 / 2 / toFloat (List.length hull))
 
@@ -247,14 +252,18 @@ create faces =
 
         zProj =
             projectOnto basis.z hullPoints
+
+        position =
+            Vector.vector xProj.center yProj.center zProj.center
+                |> Quaternion.rotateVector orientation
     in
         { a = xProj.radius
         , b = yProj.radius
         , c = zProj.radius
-        , position =
-            Vector.vector xProj.center yProj.center zProj.center
-                |> Quaternion.rotateVector orientation
-        , orientation = orientation
+        , frame =
+            { position = position
+            , orientation = orientation
+            }
         }
 
 

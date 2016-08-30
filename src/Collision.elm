@@ -31,6 +31,7 @@ import OBBTree
 import Face
 import Vector
 import Quaternion
+import Frame exposing (Frame)
 
 
 {-| Stores a three-dimensional position.
@@ -60,8 +61,10 @@ quaternion =
 
 
 {-| Given an axis to rotate around and an angle of rotation, create a quaternion.
+
+Returns Nothing if passed the zero vector.
 -}
-axisAngleRotation : Vector -> Float -> Quaternion
+axisAngleRotation : Vector -> Float -> Maybe Quaternion
 axisAngleRotation =
     Quaternion.fromAxisAngle
 
@@ -91,8 +94,7 @@ This way, we can move our objects through the world, but we don't have to re-com
 -}
 type alias Body a =
     { a
-        | position : Vector
-        , orientation : Quaternion
+        | frame : Frame
         , bounds : Bounds
     }
 

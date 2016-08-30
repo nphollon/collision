@@ -327,7 +327,9 @@ simplex points =
             base =
                 { p = fst baseLine
                 , q = snd baseLine
-                , r = farthestFromLine baseLine points
+                , r =
+                    farthestFromLine baseLine points
+                        |> Maybe.withDefault (fst baseLine)
                 }
 
             isColinear =
@@ -474,23 +476,25 @@ distanceFromLine vertex baseUnit point =
 point furthest from the line. The line is defined by two
 points.
 -}
-farthestFromLine : Pair Vector -> List Vector -> Vector
+farthestFromLine : Pair Vector -> List Vector -> Maybe Vector
 farthestFromLine ( a, b ) cs =
-    let
-        baseUnit =
-            Vector.direction b a
-    in
-        cs
-            |> List.map (\c -> ( c, distanceFromLine a baseUnit c ))
-            |> List.foldl
-                (\c d ->
-                    if (snd d) < (snd c) then
-                        c
-                    else
-                        d
-                )
-                ( a, 0 )
-            |> fst
+    case Vector.direction b a of
+        Just baseUnit ->
+            cs
+                |> List.map (\c -> ( c, distanceFromLine a baseUnit c ))
+                |> List.foldl
+                    (\c d ->
+                        if (snd d) < (snd c) then
+                            c
+                        else
+                            d
+                    )
+                    ( a, 0 )
+                |> fst
+                |> Just
+
+        Nothing ->
+            Nothing
 
 
 bigPositive : Vector

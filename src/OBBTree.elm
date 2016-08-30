@@ -4,10 +4,10 @@ import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
 import Tree exposing (Tree(..))
 import BoundingBox exposing (BoundingBox)
-import Transform
 import Face exposing (Face, FaceFacts)
-import Quaternion exposing (Quaternion)
+import Frame exposing (Frame)
 import Vector exposing (Vector)
+import Quaternion exposing (Quaternion)
 
 
 type alias OBBTree =
@@ -16,8 +16,7 @@ type alias OBBTree =
 
 type alias Body a =
     { a
-        | position : Vector
-        , orientation : Quaternion
+        | frame : Frame
         , bounds : OBBTree
     }
 
@@ -35,23 +34,40 @@ decode =
 collide : Body a -> Body b -> Bool
 collide bodyA bodyB =
     let
+        transformAFace =
+            Face.transformInto bodyA.frame
+
+        transformBFace =
+            Face.transformInto bodyB.frame
+
+        transformABox box =
+            { box | frame = Frame.add bodyA.frame box.frame }
+
+        transformBBox box =
+            { box | frame = Frame.add bodyB.frame box.frame }
+
         boxCollide boxA boxB =
-            BoundingBox.collide (Transform.add bodyA boxA)
-                (Transform.add bodyB boxB)
+            BoundingBox.collide
+                (transformABox boxA)
+                (transformBBox boxB)
 
         faceCollide faceA faceB =
-            Face.collide (Transform.faceFromBodyFrame bodyA faceA)
-                (Transform.faceFromBodyFrame bodyB faceB)
+            Face.collide
+                (transformAFace faceA)
+                (transformBFace faceB)
 
         boxFaceCollide boxA faceB =
-            BoundingBox.collideWithFace (Transform.faceFromBodyFrame bodyB faceB)
-                (Transform.add bodyA boxA)
+            BoundingBox.collideWithFace
+                (transformBFace faceB)
+                (transformABox boxA)
 
         faceBoxCollide faceA boxB =
-            BoundingBox.collideWithFace (Transform.faceFromBodyFrame bodyA faceA)
-                (Transform.add bodyB boxB)
+            BoundingBox.collideWithFace
+                (transformAFace faceA)
+                (transformBBox boxB)
     in
-        Tree.satisfies boxCollide
+        Tree.satisfies
+            boxCollide
             faceCollide
             boxFaceCollide
             faceBoxCollide
@@ -92,12 +108,12 @@ partitionFaces : BoundingBox -> List Face -> ( List Face, List Face )
 partitionFaces box faces =
     let
         transform =
-            Quaternion.rotateVector box.orientation
+            Quaternion.rotateVector box.frame.orientation
 
         basis =
-            [ ( box.a, Vector.vector 1 0 0 )
-            , ( box.b, Vector.vector 0 1 0 )
-            , ( box.c, Vector.vector 0 0 1 )
+            [ ( box.a, Vector.xAxis )
+            , ( box.b, Vector.yAxis )
+            , ( box.c, Vector.zAxis )
             ]
 
         orderedBasis =
