@@ -17,49 +17,29 @@ import Vector
 -- Project Local
 
 import Types exposing (..)
-import Model exposing (Vertex)
+import Model
 
 
 draw : Model -> Html a
 draw model =
-    WebGL.toHtml
-        [ Attr.width 500
-        , Attr.height 500
-        , Attr.style [ ( "background-color", "#d0f0ff" ) ]
-        ]
-        [ drawSolid Red model.red.frame
-        , drawSolid Blue model.blue.frame
-        ]
-
-
-drawSolid : Solid -> Frame -> Renderable
-drawSolid solid frame =
-    WebGL.render vertexShader fragmentShader cube (uniform solid frame)
-
-
-cube : Drawable Vertex
-cube =
-    Model.drawable
-        { vertexPositions =
-            Array.fromList
-                [ Vector.vector -1 1 1
-                , Vector.vector 1 1 1
-                , Vector.vector 1 -1 1
-                , Vector.vector -1 -1 1
-                , Vector.vector -1 1 -1
-                , Vector.vector 1 1 -1
-                , Vector.vector 1 -1 -1
-                , Vector.vector -1 -1 -1
-                ]
-        , vertexIndexes =
-            [ [ 3, 2, 1, 0 ]
-            , [ 5, 4, 0, 1 ]
-            , [ 6, 5, 1, 2 ]
-            , [ 7, 6, 2, 3 ]
-            , [ 7, 3, 0, 4 ]
-            , [ 7, 4, 5, 6 ]
+    Html.div [ Attr.style [ ( "height", "500" ) ] ]
+        [ WebGL.toHtml
+            [ Attr.width 500
+            , Attr.height 500
+            , Attr.style [ ( "background-color", "#d0f0ff" ) ]
             ]
-        }
+            [ drawSolid Red model.red
+            , drawSolid Blue model.blue
+            ]
+        ]
+
+
+drawSolid : Solid -> Entity -> Renderable
+drawSolid solid entity =
+    WebGL.render vertexShader
+        fragmentShader
+        entity.mesh
+        (uniform solid entity.frame)
 
 
 uniform : Solid -> Frame -> Uniform

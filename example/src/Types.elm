@@ -1,14 +1,24 @@
 module Types exposing (..)
 
+import WebGL exposing (Drawable)
+import Math.Vector3 exposing (Vec3)
+
+
+-- Collision Library
+
 import Vector exposing (Vector)
 import Collision exposing (Bounds, Body)
 
 
 type alias Model =
     { room : Room
-    , red : Body {}
-    , blue : Body {}
+    , red : Entity
+    , blue : Entity
     }
+
+
+type alias Entity =
+    Body { mesh : Drawable Vertex }
 
 
 type Room
@@ -35,6 +45,12 @@ type alias OrientationFields =
 type Solid
     = Red
     | Blue
+
+
+type alias Vertex =
+    { position : Vec3
+    , normal : Vec3
+    }
 
 
 type Action

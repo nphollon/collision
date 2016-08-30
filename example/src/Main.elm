@@ -1,9 +1,11 @@
 module Main exposing (main)
 
+import Array
 import String
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.App as App
+import WebGL exposing (Drawable)
 
 
 -- Collision Library
@@ -12,6 +14,7 @@ import Collision
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
 import Frame exposing (Frame)
+import Face exposing (Face)
 
 
 -- Project Local
@@ -20,6 +23,7 @@ import Types exposing (..)
 import Controls
 import OrthoView
 import DataView
+import Model
 
 
 main : Program Never
@@ -36,16 +40,43 @@ init =
     { room = Entrance
     , red =
         { frame = Frame.identity
-        , bounds = Collision.empty
+        , bounds = Collision.create cube
+        , mesh = Model.drawable cube
         }
     , blue =
         { frame =
             { position = Vector.vector 0 0 -5
             , orientation = Quaternion.identity
             }
-        , bounds = Collision.empty
+        , bounds = Collision.create cube
+        , mesh = Model.drawable cube
         }
     }
+
+
+cube : List Face
+cube =
+    Model.toFaces
+        { vertexPositions =
+            Array.fromList
+                [ Vector.vector -1 1 1
+                , Vector.vector 1 1 1
+                , Vector.vector 1 -1 1
+                , Vector.vector -1 -1 1
+                , Vector.vector -1 1 -1
+                , Vector.vector 1 1 -1
+                , Vector.vector 1 -1 -1
+                , Vector.vector -1 -1 -1
+                ]
+        , vertexIndexes =
+            [ [ 3, 2, 1, 0 ]
+            , [ 5, 4, 0, 1 ]
+            , [ 6, 5, 1, 2 ]
+            , [ 7, 6, 2, 3 ]
+            , [ 7, 3, 0, 4 ]
+            , [ 7, 4, 5, 6 ]
+            ]
+        }
 
 
 update : Action -> Model -> Model

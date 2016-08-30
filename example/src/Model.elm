@@ -1,4 +1,4 @@
-module Model exposing (drawable, Vertex, MeshData)
+module Model exposing (toFaces, drawable, MeshData)
 
 import Array exposing (Array)
 import Maybe.Extra as MaybeX
@@ -12,10 +12,9 @@ import Vector exposing (Vector)
 import Face exposing (Face)
 
 
-type alias Vertex =
-    { position : Vec3
-    , normal : Vec3
-    }
+-- Project local
+
+import Types exposing (..)
 
 
 type alias MeshData =
@@ -24,11 +23,9 @@ type alias MeshData =
     }
 
 
-drawable : MeshData -> Drawable Vertex
-drawable data =
-    toFaces data
-        |> List.filterMap toVertexTriangle
-        |> Triangle
+drawable : List Face -> Drawable Vertex
+drawable =
+    List.filterMap toVertexTriangle >> Triangle
 
 
 toFaces : MeshData -> List Face
