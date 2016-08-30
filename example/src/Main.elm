@@ -34,13 +34,17 @@ main =
 init : Model
 init =
     { room = Entrance
-    , redFrame = Frame.identity
-    , blueFrame =
-        { position = Vector.vector 0 0 -5
-        , orientation = Quaternion.identity
+    , red =
+        { frame = Frame.identity
+        , bounds = Collision.empty
         }
-    , redBounds = Collision.empty
-    , blueBounds = Collision.empty
+    , blue =
+        { frame =
+            { position = Vector.vector 0 0 -5
+            , orientation = Quaternion.identity
+            }
+        , bounds = Collision.empty
+        }
     }
 
 
@@ -93,12 +97,16 @@ type alias WithSolid a =
 
 updateSolid : (WithSolid a -> Frame -> Frame) -> WithSolid a -> Model -> Model
 updateSolid transform fields model =
-    case fields.solid of
-        Red ->
-            { model | redFrame = transform fields model.redFrame }
+    let
+        updateBody body =
+            { body | frame = transform fields body.frame }
+    in
+        case fields.solid of
+            Red ->
+                { model | red = updateBody model.red }
 
-        Blue ->
-            { model | blueFrame = transform fields model.blueFrame }
+            Blue ->
+                { model | blue = updateBody model.blue }
 
 
 parseVector : PositionFields -> Vector

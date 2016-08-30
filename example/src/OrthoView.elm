@@ -27,8 +27,8 @@ draw model =
         , Attr.height 500
         , Attr.style [ ( "background-color", "#d0f0ff" ) ]
         ]
-        [ drawSolid Red model.redFrame
-        , drawSolid Blue model.blueFrame
+        [ drawSolid Red model.red.frame
+        , drawSolid Blue model.blue.frame
         ]
 
 

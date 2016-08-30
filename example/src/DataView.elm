@@ -7,7 +7,7 @@ import Html.Attributes as Attr
 
 -- Collision Library
 
-import Frame exposing (Frame)
+import Collision exposing (Body)
 
 
 -- Project Local
@@ -29,15 +29,15 @@ draw model =
         Html.div [ Attr.style [ ( "width", "250px" ) ] ]
             [ Html.h2 [ titleStyle ] [ Html.text "Red" ]
             , Elements.divider
-            , displayFrame model.redFrame
+            , displayBody model.red
             , Html.h2 [ titleStyle ] [ Html.text "Blue" ]
             , Elements.divider
-            , displayFrame model.blueFrame
+            , displayBody model.blue
             ]
 
 
-displayFrame : Frame -> Html a
-displayFrame frame =
+displayBody : Body b -> Html a
+displayBody { frame } =
     Html.div
         [ Attr.style
             [ ( "display", "flex" )

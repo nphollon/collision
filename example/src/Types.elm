@@ -1,16 +1,13 @@
 module Types exposing (..)
 
 import Vector exposing (Vector)
-import Frame exposing (Frame)
-import Collision exposing (Bounds)
+import Collision exposing (Bounds, Body)
 
 
 type alias Model =
     { room : Room
-    , redFrame : Frame
-    , redBounds : Bounds
-    , blueFrame : Frame
-    , blueBounds : Bounds
+    , red : Body {}
+    , blue : Body {}
     }
 
 
