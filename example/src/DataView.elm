@@ -40,40 +40,47 @@ draw model =
             ]
 
 
-displayBody : Body b -> Html ( Int, Int )
-displayBody { frame, bounds } =
-    Html.div
-        [ Attr.style
-            [ ( "display", "flex" )
-            , ( "flex-wrap", "wrap" )
-            , ( "justify-content", "space-around" )
-            , ( "margin-bottom", "25px" )
+displayBody : Entity -> Html ( Int, Int )
+displayBody entity =
+    let
+        position =
+            entity.frame.position
+
+        orientation =
+            entity.frame.orientation
+    in
+        Html.div
+            [ Attr.style
+                [ ( "display", "flex" )
+                , ( "flex-wrap", "wrap" )
+                , ( "justify-content", "space-around" )
+                , ( "margin-bottom", "25px" )
+                ]
             ]
-        ]
-        [ Html.div []
-            [ Html.text ("X = " ++ float frame.position.x)
-            , Html.br [] []
-            , Html.text ("Y = " ++ float frame.position.y)
-            , Html.br [] []
-            , Html.text ("Z = " ++ float frame.position.z)
+            [ Html.div []
+                [ Html.text ("X = " ++ float position.x)
+                , Html.br [] []
+                , Html.text ("Y = " ++ float position.y)
+                , Html.br [] []
+                , Html.text ("Z = " ++ float position.z)
+                ]
+            , Html.div []
+                [ Html.text ("Qw = " ++ float orientation.scalar)
+                , Html.br [] []
+                , Html.text ("Qx = " ++ float orientation.vector.x)
+                , Html.br [] []
+                , Html.text ("Qy = " ++ float orientation.vector.y)
+                , Html.br [] []
+                , Html.text ("Qz = " ++ float orientation.vector.z)
+                ]
+            , Html.div [ Attr.style [ ( "width", "100%" ) ] ]
+                [ drawTree entity.selectedNode ( 0, 0 ) entity.bounds
+                ]
             ]
-        , Html.div []
-            [ Html.text ("Qw = " ++ float frame.orientation.scalar)
-            , Html.br [] []
-            , Html.text ("Qx = " ++ float frame.orientation.vector.x)
-            , Html.br [] []
-            , Html.text ("Qy = " ++ float frame.orientation.vector.y)
-            , Html.br [] []
-            , Html.text ("Qz = " ++ float frame.orientation.vector.z)
-            ]
-        , Html.div [ Attr.style [ ( "width", "100%" ) ] ]
-            [ drawTree 0 0 bounds
-            ]
-        ]
 
 
-drawTree : Int -> Int -> Bounds -> Html ( Int, Int )
-drawTree level offset tree =
+drawTree : ( Int, Int ) -> ( Int, Int ) -> Bounds -> Html ( Int, Int )
+drawTree selected coords tree =
     case tree of
         Leaf b ->
             Html.div
@@ -82,7 +89,7 @@ drawTree level offset tree =
                     , ( "justify-content", "center" )
                     ]
                 ]
-                [ nodeBox level offset ]
+                [ nodeBox selected coords ]
 
         Node a left right ->
             Html.div
@@ -92,38 +99,57 @@ drawTree level offset tree =
                     , ( "justify-content", "center" )
                     ]
                 ]
-                [ nodeBox level offset
+                [ nodeBox selected coords
                 , branches
-                , drawChild (1 + level) (2 * offset) left
-                , drawChild (1 + level) (2 * offset + 1) right
+                , drawChild selected (toTheLeft coords) left
+                , drawChild selected (toTheRight coords) right
                 ]
 
 
-nodeBox : Int -> Int -> Html ( Int, Int )
-nodeBox level offset =
-    Hov.hover
-        [ ( "background-color", "#9999dd" ) ]
-        Html.div
-        [ Attr.style
-            [ ( "width", "1.5rem" )
-            , ( "height", "1.5rem" )
-            , ( "background-color", "black" )
-            , ( "border-radius", "0.75rem" )
+toTheLeft : ( Int, Int ) -> ( Int, Int )
+toTheLeft ( level, offset ) =
+    ( level + 1, 2 * offset )
+
+
+toTheRight : ( Int, Int ) -> ( Int, Int )
+toTheRight ( level, offset ) =
+    ( level + 1, 2 * offset + 1 )
+
+
+nodeBox : ( Int, Int ) -> ( Int, Int ) -> Html ( Int, Int )
+nodeBox selected coords =
+    let
+        color =
+            if selected == coords then
+                "blue"
+            else
+                "#999999"
+    in
+        Hov.hover
+            [ ( "border-color", "#999999" ) ]
+            Html.div
+            [ Attr.style
+                [ ( "width", "1.5rem" )
+                , ( "height", "1.5rem" )
+                , ( "background-color", color )
+                , ( "border-radius", "1rem" )
+                , ( "border", "0.25rem solid" )
+                , ( "border-color", "white" )
+                ]
+            , Evt.onClick coords
             ]
-        , Evt.onClick ( level, offset )
-        ]
-        []
+            []
 
 
-drawChild : Int -> Int -> Bounds -> Html ( Int, Int )
-drawChild level offset tree =
+drawChild : ( Int, Int ) -> ( Int, Int ) -> Bounds -> Html ( Int, Int )
+drawChild selected coords tree =
     Html.div
         [ Attr.style
             [ ( "width", "40%" )
             , ( "flex-grow", "1" )
             ]
         ]
-        [ drawTree level offset tree ]
+        [ drawTree selected coords tree ]
 
 
 branches : Html a

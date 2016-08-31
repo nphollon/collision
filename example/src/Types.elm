@@ -18,7 +18,10 @@ type alias Model =
 
 
 type alias Entity =
-    Body { mesh : Drawable Vertex }
+    Body
+        { mesh : Drawable Vertex
+        , selectedNode : ( Int, Int )
+        }
 
 
 type Room

@@ -41,6 +41,7 @@ init =
         { frame = Frame.identity
         , bounds = Collision.create cube
         , mesh = Model.drawable cube
+        , selectedNode = ( 0, 0 )
         }
     , blue =
         { frame =
@@ -49,6 +50,7 @@ init =
             }
         , bounds = Collision.create cube
         , mesh = Model.drawable cube
+        , selectedNode = ( 0, 0 )
         }
     }
 
@@ -100,29 +102,25 @@ update action model =
             { model | room = OrientationEditor { fields | axis = axis } }
 
         ( SetPosition, PositionEditor fields ) ->
-            updateSolid (parseVector >> Frame.setPosition) fields model
+            updateFrame (parseVector >> Frame.setPosition) fields model
 
         ( ExtrinsicNudge, PositionEditor fields ) ->
-            updateSolid (parseVector >> Frame.extrinsicNudge) fields model
+            updateFrame (parseVector >> Frame.extrinsicNudge) fields model
 
         ( IntrinsicNudge, PositionEditor fields ) ->
-            updateSolid (parseVector >> Frame.intrinsicNudge) fields model
+            updateFrame (parseVector >> Frame.intrinsicNudge) fields model
 
         ( ExtrinsicRotate, OrientationEditor fields ) ->
-            updateSolid (parseRotation >> Frame.extrinsicRotate) fields model
+            updateFrame (parseRotation >> Frame.extrinsicRotate) fields model
 
         ( IntrinsicRotate, OrientationEditor fields ) ->
-            updateSolid (parseRotation >> Frame.intrinsicRotate) fields model
+            updateFrame (parseRotation >> Frame.intrinsicRotate) fields model
 
         ( ResetOrientation, OrientationEditor fields ) ->
-            updateSolid (\_ -> Frame.setOrientation Quaternion.identity) fields model
+            updateFrame (\_ -> Frame.setOrientation Quaternion.identity) fields model
 
         ( SelectNode solid coords, _ ) ->
-            let
-                _ =
-                    Debug.log "Selected" ( solid, coords )
-            in
-                model
+            updateEntity (\body -> { body | selectedNode = coords }) solid model
 
         _ ->
             model
@@ -132,18 +130,24 @@ type alias WithSolid a =
     { a | solid : Solid }
 
 
-updateSolid : (WithSolid a -> Frame -> Frame) -> WithSolid a -> Model -> Model
-updateSolid transform fields model =
-    let
-        updateBody body =
+updateFrame : (WithSolid a -> Frame -> Frame) -> WithSolid a -> Model -> Model
+updateFrame transform fields model =
+    updateEntity
+        (\body ->
             { body | frame = transform fields body.frame }
-    in
-        case fields.solid of
-            Red ->
-                { model | red = updateBody model.red }
+        )
+        fields.solid
+        model
 
-            Blue ->
-                { model | blue = updateBody model.blue }
+
+updateEntity : (Entity -> Entity) -> Solid -> Model -> Model
+updateEntity transform solid model =
+    case solid of
+        Red ->
+            { model | red = transform model.red }
+
+        Blue ->
+            { model | blue = transform model.blue }
 
 
 parseVector : PositionFields -> Vector

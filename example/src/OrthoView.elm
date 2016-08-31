@@ -1,6 +1,5 @@
 module OrthoView exposing (draw)
 
-import Array
 import Html exposing (Html)
 import Html.Attributes as Attr
 import WebGL exposing (Drawable, Shader, Renderable)
@@ -17,7 +16,6 @@ import Vector
 -- Project Local
 
 import Types exposing (..)
-import Model
 
 
 draw : Model -> Html a
