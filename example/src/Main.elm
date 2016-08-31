@@ -5,7 +5,6 @@ import String
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.App as App
-import WebGL exposing (Drawable)
 
 
 -- Collision Library
@@ -117,6 +116,13 @@ update action model =
 
         ( ResetOrientation, OrientationEditor fields ) ->
             updateSolid (\_ -> Frame.setOrientation Quaternion.identity) fields model
+
+        ( SelectNode solid coords, _ ) ->
+            let
+                _ =
+                    Debug.log "Selected" ( solid, coords )
+            in
+                model
 
         _ ->
             model

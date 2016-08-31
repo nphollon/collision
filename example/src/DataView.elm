@@ -3,6 +3,8 @@ module DataView exposing (draw)
 import String
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.App as App
+import Html.Events as Evt
 
 
 -- Collision Library
@@ -17,7 +19,7 @@ import Types exposing (..)
 import Elements
 
 
-draw : Model -> Html a
+draw : Model -> Html Action
 draw model =
     let
         titleStyle =
@@ -30,14 +32,14 @@ draw model =
         Html.div [ Attr.style [ ( "width", "750px" ) ] ]
             [ Html.h2 [ titleStyle ] [ Html.text "Red" ]
             , Elements.divider
-            , displayBody model.red
+            , App.map (SelectNode Red) (displayBody model.red)
             , Html.h2 [ titleStyle ] [ Html.text "Blue" ]
             , Elements.divider
-            , displayBody model.blue
+            , App.map (SelectNode Blue) (displayBody model.blue)
             ]
 
 
-displayBody : Body b -> Html a
+displayBody : Body b -> Html ( Int, Int )
 displayBody { frame, bounds } =
     Html.div
         [ Attr.style
@@ -64,13 +66,13 @@ displayBody { frame, bounds } =
             , Html.text ("Qz = " ++ float frame.orientation.vector.z)
             ]
         , Html.div [ Attr.style [ ( "width", "100%" ) ] ]
-            [ drawTree bounds
+            [ drawTree 0 0 bounds
             ]
         ]
 
 
-drawTree : Bounds -> Html a
-drawTree tree =
+drawTree : Int -> Int -> Bounds -> Html ( Int, Int )
+drawTree level offset tree =
     case tree of
         Leaf b ->
             Html.div
@@ -79,7 +81,7 @@ drawTree tree =
                     , ( "justify-content", "center" )
                     ]
                 ]
-                [ leafBox ]
+                [ leafBox level offset ]
 
         Node a left right ->
             Html.div
@@ -90,46 +92,48 @@ drawTree tree =
                     ]
                 ]
                 [ leftBranch
-                , nodeBox
+                , nodeBox level offset
                 , rightBranch
-                , drawChild left
-                , drawChild right
+                , drawChild (1 + level) (2 * offset) left
+                , drawChild (1 + level) (2 * offset + 1) right
                 ]
 
 
-nodeBox : Html a
-nodeBox =
+nodeBox : Int -> Int -> Html ( Int, Int )
+nodeBox level offset =
     Html.div
         [ Attr.style
             [ ( "width", "1rem" )
             , ( "height", "1rem" )
             , ( "background-color", "blue" )
             ]
+        , Evt.onClick ( level, offset )
         ]
         []
 
 
-leafBox : Html a
-leafBox =
+leafBox : Int -> Int -> Html ( Int, Int )
+leafBox level offset =
     Html.div
         [ Attr.style
             [ ( "width", "1rem" )
             , ( "height", "1rem" )
             , ( "background-color", "#00aa00" )
             ]
+        , Evt.onClick ( level, offset )
         ]
         []
 
 
-drawChild : Bounds -> Html a
-drawChild tree =
+drawChild : Int -> Int -> Bounds -> Html ( Int, Int )
+drawChild level offset tree =
     Html.div
         [ Attr.style
             [ ( "width", "40%" )
             , ( "flex-grow", "1" )
             ]
         ]
-        [ drawTree tree ]
+        [ drawTree level offset tree ]
 
 
 leftBranch : Html a

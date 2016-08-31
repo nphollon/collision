@@ -66,3 +66,4 @@ type Action
     | ExtrinsicRotate
     | IntrinsicRotate
     | ResetOrientation
+    | SelectNode Solid ( Int, Int )
