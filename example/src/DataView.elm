@@ -5,6 +5,7 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.App as App
 import Html.Events as Evt
+import InlineHover as Hov
 
 
 -- Collision Library
@@ -81,7 +82,7 @@ drawTree level offset tree =
                     , ( "justify-content", "center" )
                     ]
                 ]
-                [ leafBox level offset ]
+                [ nodeBox level offset ]
 
         Node a left right ->
             Html.div
@@ -91,9 +92,8 @@ drawTree level offset tree =
                     , ( "justify-content", "center" )
                     ]
                 ]
-                [ leftBranch
-                , nodeBox level offset
-                , rightBranch
+                [ nodeBox level offset
+                , branches
                 , drawChild (1 + level) (2 * offset) left
                 , drawChild (1 + level) (2 * offset + 1) right
                 ]
@@ -101,24 +101,14 @@ drawTree level offset tree =
 
 nodeBox : Int -> Int -> Html ( Int, Int )
 nodeBox level offset =
-    Html.div
+    Hov.hover
+        [ ( "background-color", "#9999dd" ) ]
+        Html.div
         [ Attr.style
-            [ ( "width", "1rem" )
-            , ( "height", "1rem" )
-            , ( "background-color", "blue" )
-            ]
-        , Evt.onClick ( level, offset )
-        ]
-        []
-
-
-leafBox : Int -> Int -> Html ( Int, Int )
-leafBox level offset =
-    Html.div
-        [ Attr.style
-            [ ( "width", "1rem" )
-            , ( "height", "1rem" )
-            , ( "background-color", "#00aa00" )
+            [ ( "width", "1.5rem" )
+            , ( "height", "1.5rem" )
+            , ( "background-color", "black" )
+            , ( "border-radius", "0.75rem" )
             ]
         , Evt.onClick ( level, offset )
         ]
@@ -136,33 +126,26 @@ drawChild level offset tree =
         [ drawTree level offset tree ]
 
 
-leftBranch : Html a
-leftBranch =
+branches : Html a
+branches =
     Html.div
         [ Attr.style
-            [ ( "width", "40%" )
+            [ ( "width", "100%" )
             , ( "display", "flex" )
-            , ( "justify-content", "flex-end" )
+            , ( "justify-content", "center" )
             ]
         ]
         [ Html.div
-            [ Attr.style [ ( "width", "60%" ) ] ]
-            [ Html.hr [] [] ]
-        ]
-
-
-rightBranch : Html a
-rightBranch =
-    Html.div
-        [ Attr.style
-            [ ( "width", "40%" )
-            , ( "display", "flex" )
-            , ( "justify-content", "flex-start" )
+            [ Attr.style
+                [ ( "width", "50%" )
+                , ( "height", "1rem" )
+                , ( "margin-top", "0.2rem" )
+                , ( "border", "1px solid black" )
+                , ( "border-radius", "0.5rem" )
+                , ( "border-bottom", "none" )
+                ]
             ]
-        ]
-        [ Html.div
-            [ Attr.style [ ( "width", "60%" ) ] ]
-            [ Html.hr [] [] ]
+            []
         ]
 
 
