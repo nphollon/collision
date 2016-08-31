@@ -10,7 +10,7 @@ import InlineHover as Hov
 
 -- Collision Library
 
-import Collision exposing (Body, Bounds)
+import Collision exposing (Body, Bounds, Vector, Quaternion)
 import Tree exposing (Tree(..))
 
 
@@ -30,7 +30,8 @@ draw model =
                 , ( "text-align", "center" )
                 ]
     in
-        Html.div [ Attr.style [ ( "width", "750px" ) ] ]
+        Html.div
+            [ Attr.style [ ( "width", "750px" ) ] ]
             [ Html.h2 [ titleStyle ] [ Html.text "Red" ]
             , Elements.divider
             , App.map (SelectNode Red) (displayBody model.red)
@@ -48,35 +49,98 @@ displayBody entity =
 
         orientation =
             entity.frame.orientation
+
+        selectedSubtree =
+            Tree.subtreeAt entity.selectedNode entity.bounds
     in
         Html.div
             [ Attr.style
                 [ ( "display", "flex" )
                 , ( "flex-wrap", "wrap" )
-                , ( "justify-content", "space-around" )
-                , ( "margin-bottom", "25px" )
+                , ( "justify-content", "center" )
                 ]
             ]
-            [ Html.div []
-                [ Html.text ("X = " ++ float position.x)
-                , Html.br [] []
-                , Html.text ("Y = " ++ float position.y)
-                , Html.br [] []
-                , Html.text ("Z = " ++ float position.z)
+            [ Html.div
+                [ Attr.style
+                    [ ( "line-height", "2rem" )
+                    , ( "width", "500px" )
+                    ]
                 ]
-            , Html.div []
-                [ Html.text ("Qw = " ++ float orientation.scalar)
-                , Html.br [] []
-                , Html.text ("Qx = " ++ float orientation.vector.x)
-                , Html.br [] []
-                , Html.text ("Qy = " ++ float orientation.vector.y)
-                , Html.br [] []
-                , Html.text ("Qz = " ++ float orientation.vector.z)
+                [ vectorDetails "Position" entity.frame.position
+                , quaternionDetails "Orientation" entity.frame.orientation
+                , subtreeDetails selectedSubtree
                 ]
-            , Html.div [ Attr.style [ ( "width", "100%" ) ] ]
+            , Html.div
+                [ Attr.style
+                    [ ( "margin-top", "1rem" )
+                    , ( "margin-bottom", "2rem" )
+                    ]
+                ]
                 [ drawTree entity.selectedNode ( 0, 0 ) entity.bounds
                 ]
             ]
+
+
+subtreeDetails : Bounds -> Html a
+subtreeDetails tree =
+    case tree of
+        Leaf face ->
+            Html.div []
+                [ vectorDetails "Vertex 1" face.p
+                , vectorDetails "Vertex 2" face.q
+                , vectorDetails "Vertex 3" face.r
+                ]
+
+        Node box _ _ ->
+            Html.div []
+                [ line "Radius"
+                    [ ( "A", box.a ), ( "B", box.b ), ( "C", box.c ) ]
+                , vectorDetails "Offset" box.frame.position
+                , quaternionDetails "Rotation" box.frame.orientation
+                ]
+
+
+vectorDetails : String -> Vector -> Html a
+vectorDetails label position =
+    line label
+        [ ( "X", position.x )
+        , ( "Y", position.y )
+        , ( "Z", position.z )
+        ]
+
+
+quaternionDetails : String -> Quaternion -> Html a
+quaternionDetails label orientation =
+    line label
+        [ ( "W", orientation.scalar )
+        , ( "X", orientation.vector.x )
+        , ( "Y", orientation.vector.y )
+        , ( "Z", orientation.vector.z )
+        ]
+
+
+line : String -> List ( String, Float ) -> Html a
+line label lineItems =
+    let
+        fields =
+            List.map (uncurry field) lineItems
+    in
+        Html.div
+            [ Attr.style
+                [ ( "display", "flex" )
+                , ( "justify-content", "space-around" )
+                ]
+            ]
+            (Html.em [] [ Html.text label ] :: fields)
+
+
+field : String -> Float -> Html a
+field label value =
+    Html.div []
+        [ Html.text label
+        , Html.text " = "
+        , Html.text (float value)
+        ]
 
 
 drawTree : ( Int, Int ) -> ( Int, Int ) -> Bounds -> Html ( Int, Int )

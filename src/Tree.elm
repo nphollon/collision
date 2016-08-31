@@ -1,4 +1,4 @@
-module Tree exposing (Tree(..), satisfies, leaves, encode, decode)
+module Tree exposing (Tree(..), satisfies, leaves, encode, decode, subtreeAt)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
@@ -47,6 +47,26 @@ leaves tree =
 
         Node _ left right ->
             leaves left ++ leaves right
+
+
+subtreeAt : ( Int, Int ) -> Tree a b -> Tree a b
+subtreeAt ( level, offset ) tree =
+    case tree of
+        Leaf b ->
+            tree
+
+        Node a left right ->
+            if level == 0 then
+                tree
+            else
+                let
+                    midpoint =
+                        2 ^ (level - 1)
+                in
+                    if offset < midpoint then
+                        subtreeAt ( level - 1, offset ) left
+                    else
+                        subtreeAt ( level - 1, offset - midpoint ) right
 
 
 encode : (a -> Value) -> (b -> Value) -> Tree a b -> Value
