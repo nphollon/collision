@@ -113,10 +113,10 @@ orientationControls =
     in
         submenu
             [ inputField EditAngle "Angle (Degrees) "
-            , Html.select [ Evt.on "change" (Json.map toAxis Evt.targetValue) ]
-                [ Html.option [ Attr.value "x" ] [ Html.text "X Axis" ]
-                , Html.option [ Attr.value "y" ] [ Html.text "Y Axis" ]
-                , Html.option [ Attr.value "z" ] [ Html.text "Z Axis" ]
+            , select toAxis
+                [ ( "x", "X Axis" )
+                , ( "y", "Y Axis" )
+                , ( "z", "Z Axis" )
                 ]
             , Elements.spacer
             , button ExtrinsicRotate "Extrinsic Rotate"
@@ -127,26 +127,52 @@ orientationControls =
 
 viewControls : Html Action
 viewControls =
-    submenu
-        [ Html.div []
-            [ Html.input [ Attr.type' "checkbox" ] []
-            , Html.text "Show collisions only"
-            ]
-        , Html.div []
-            [ Html.input [ Attr.type' "checkbox" ] []
-            , Html.text "Show bounding boxes"
-            ]
-        , Html.div []
-            [ Html.text "Tree level"
-            , Html.select []
-                [ Html.option [] [ Html.text "1" ]
-                , Html.option [] [ Html.text "2" ]
-                , Html.option [] [ Html.text "3" ]
-                , Html.option [] [ Html.text "4" ]
-                , Html.option [] [ Html.text "5" ]
+    let
+        treeLevels =
+            List.map (\i -> ( toString i, toString i )) [1..5]
+    in
+        submenu
+            [ checkbox "show-collisions" "Show collisions only"
+            , Elements.spacer
+            , checkbox "show-bounds" "Show bounding boxes"
+            , Html.div []
+                [ Html.text "Tree level"
+                , select (always (SetAxis Vector.xAxis)) treeLevels
                 ]
             ]
+
+
+checkbox : String -> String -> Html a
+checkbox id label =
+    Html.div
+        [ Attr.style [ ( "margin", "5px" ) ] ]
+        [ Html.label [ Attr.for id ] [ Html.text label ]
+        , Html.input
+            [ Attr.type' "checkbox"
+            , Attr.style [ ( "border", "none" ) ]
+            , Attr.id id
+            ]
+            []
         ]
+
+
+select : (String -> a) -> List ( String, String ) -> Html a
+select sendMsg =
+    let
+        toOption ( value, label ) =
+            Html.option [ Attr.value value ] [ Html.text label ]
+
+        handler =
+            Evt.on "change" (Json.map sendMsg Evt.targetValue)
+    in
+        List.map toOption
+            >> Html.select
+                [ handler
+                , Attr.style
+                    [ ( "width", "5rem" )
+                    , ( "margin", "0.5rem" )
+                    ]
+                ]
 
 
 backButton : Html Action
@@ -156,9 +182,18 @@ backButton =
 
 inputField : (String -> msg) -> String -> Html msg
 inputField sendMsg label =
-    Html.div []
+    Html.div [ Attr.style [ ( "margin", "0.2rem" ) ] ]
         [ Html.text label
-        , Html.input [ Attr.size 3, Evt.onInput sendMsg ] []
+        , Html.input
+            [ Attr.style
+                [ ( "border", "none" )
+                , ( "background-color", "#eeeeee" )
+                , ( "padding", "0.3rem" )
+                ]
+            , Attr.size 3
+            , Evt.onInput sendMsg
+            ]
+            []
         ]
 
 
