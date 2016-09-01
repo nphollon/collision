@@ -28,6 +28,7 @@ type Room
     = Entrance
     | PositionEditor PositionFields
     | OrientationEditor OrientationFields
+    | ViewEditor
 
 
 type alias PositionFields =

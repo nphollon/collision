@@ -1,7 +1,7 @@
 module Controls exposing (draw)
 
 import Json.Decode as Json
-import Html exposing (Html)
+import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
 import Html.Events as Evt
 import InlineHover as Hov
@@ -38,12 +38,15 @@ draw model =
 
                 OrientationEditor _ ->
                     ( "Change Orientation", orientationControls )
+
+                ViewEditor ->
+                    ( "View Settings", viewControls )
     in
         Html.div
             [ Attr.style
                 [ ( "display", "flex" )
                 , ( "flex-direction", "column" )
-                , ( "width", "200px" )
+                , ( "width", "250px" )
                 ]
             ]
             [ Html.h1 [ titleStyle ] [ Html.text title ]
@@ -73,29 +76,20 @@ entranceControls =
                 |> ChangeRoom
     in
         Html.div
-            [ Attr.style
-                [ ( "display", "flex" )
-                , ( "flex-wrap", "wrap" )
-                , ( "justify-content", "center" )
-                ]
-            ]
+            [ controlPanelStyle ]
             [ button (editPositionFor Red) "Red Position"
             , button (editOrientationFor Red) "Red Orientation"
             , Elements.spacer
             , button (editPositionFor Blue) "Blue Position"
             , button (editOrientationFor Blue) "Blue Orientation"
+            , Elements.spacer
+            , button (ChangeRoom ViewEditor) "View Settings"
             ]
 
 
 positionControls : Html Action
 positionControls =
-    Html.div
-        [ Attr.style
-            [ ( "display", "flex" )
-            , ( "flex-direction", "column" )
-            , ( "align-items", "center" )
-            ]
-        ]
+    submenu
         [ inputField EditX "X "
         , inputField EditY "Y "
         , inputField EditZ "Z "
@@ -103,8 +97,6 @@ positionControls =
         , button SetPosition "Set Position"
         , button ExtrinsicNudge "Extrinsic Nudge"
         , button IntrinsicNudge "Intrinsic Nudge"
-        , Elements.spacer
-        , backButton
         ]
 
 
@@ -119,13 +111,7 @@ orientationControls =
             else
                 SetAxis Vector.xAxis
     in
-        Html.div
-            [ Attr.style
-                [ ( "display", "flex" )
-                , ( "flex-direction", "column" )
-                , ( "align-items", "center" )
-                ]
-            ]
+        submenu
             [ inputField EditAngle "Angle (Degrees) "
             , Html.select [ Evt.on "change" (Json.map toAxis Evt.targetValue) ]
                 [ Html.option [ Attr.value "x" ] [ Html.text "X Axis" ]
@@ -136,9 +122,31 @@ orientationControls =
             , button ExtrinsicRotate "Extrinsic Rotate"
             , button IntrinsicRotate "Intrinsic Rotate"
             , button ResetOrientation "Reset"
-            , Elements.spacer
-            , backButton
             ]
+
+
+viewControls : Html Action
+viewControls =
+    submenu
+        [ Html.div []
+            [ Html.input [ Attr.type' "checkbox" ] []
+            , Html.text "Show collisions only"
+            ]
+        , Html.div []
+            [ Html.input [ Attr.type' "checkbox" ] []
+            , Html.text "Show bounding boxes"
+            ]
+        , Html.div []
+            [ Html.text "Tree level"
+            , Html.select []
+                [ Html.option [] [ Html.text "1" ]
+                , Html.option [] [ Html.text "2" ]
+                , Html.option [] [ Html.text "3" ]
+                , Html.option [] [ Html.text "4" ]
+                , Html.option [] [ Html.text "5" ]
+                ]
+            ]
+        ]
 
 
 backButton : Html Action
@@ -170,3 +178,24 @@ button sendMsg label =
             ]
         ]
         [ Html.text label ]
+
+
+controlPanelStyle : Attribute Action
+controlPanelStyle =
+    Attr.style
+        [ ( "display", "flex" )
+        , ( "flex-direction", "column" )
+        , ( "align-items", "center" )
+        ]
+
+
+submenu : List (Html Action) -> Html Action
+submenu content =
+    let
+        fullContent =
+            Elements.spacer
+                :: content
+                ++ [ Elements.spacer, backButton ]
+    in
+        Html.div [ controlPanelStyle ]
+            fullContent

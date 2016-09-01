@@ -85,6 +85,9 @@ cube =
 update : Action -> Model -> Model
 update action model =
     case ( action, model.room ) of
+        --
+        -- Navigate the UI
+        --
         ( ChangeRoom room, _ ) ->
             { model | room = room }
 
@@ -98,31 +101,63 @@ update action model =
             { model | room = PositionEditor { fields | zText = zText } }
 
         ( EditAngle angleText, OrientationEditor fields ) ->
-            { model | room = OrientationEditor { fields | angleText = angleText } }
+            { model
+                | room =
+                    OrientationEditor { fields | angleText = angleText }
+            }
 
         ( SetAxis axis, OrientationEditor fields ) ->
-            { model | room = OrientationEditor { fields | axis = axis } }
+            { model
+                | room = OrientationEditor { fields | axis = axis }
+            }
 
+        --
+        -- Move the entities
+        --
         ( SetPosition, PositionEditor fields ) ->
-            updateFrame (parseVector >> Frame.setPosition) fields model
+            updateFrame
+                (parseVector >> Frame.setPosition)
+                fields
+                model
 
         ( ExtrinsicNudge, PositionEditor fields ) ->
-            updateFrame (parseVector >> Frame.extrinsicNudge) fields model
+            updateFrame
+                (parseVector >> Frame.extrinsicNudge)
+                fields
+                model
 
         ( IntrinsicNudge, PositionEditor fields ) ->
-            updateFrame (parseVector >> Frame.intrinsicNudge) fields model
+            updateFrame
+                (parseVector >> Frame.intrinsicNudge)
+                fields
+                model
 
         ( ExtrinsicRotate, OrientationEditor fields ) ->
-            updateFrame (parseRotation >> Frame.extrinsicRotate) fields model
+            updateFrame
+                (parseRotation >> Frame.extrinsicRotate)
+                fields
+                model
 
         ( IntrinsicRotate, OrientationEditor fields ) ->
-            updateFrame (parseRotation >> Frame.intrinsicRotate) fields model
+            updateFrame
+                (parseRotation >> Frame.intrinsicRotate)
+                fields
+                model
 
         ( ResetOrientation, OrientationEditor fields ) ->
-            updateFrame (\_ -> Frame.setOrientation Quaternion.identity) fields model
+            updateFrame
+                (\_ -> Frame.setOrientation Quaternion.identity)
+                fields
+                model
 
+        --
+        -- Change what information is displayed
+        --
         ( SelectNode solid coords, _ ) ->
-            updateEntity (\body -> { body | selectedNode = coords }) solid model
+            updateEntity
+                (\body -> { body | selectedNode = coords })
+                solid
+                model
 
         _ ->
             model
