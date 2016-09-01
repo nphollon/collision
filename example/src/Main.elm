@@ -45,8 +45,10 @@ init =
         }
     , blue =
         { frame =
-            { position = Vector.vector 0 0 -5
-            , orientation = Quaternion.identity
+            { position = Vector.vector 0 1.6 -2
+            , orientation =
+                Quaternion.quaternion 0.85 0.35 0.35 0.15
+                    |> Quaternion.scale (1.010101)
             }
         , bounds = Collision.create cube
         , mesh = Model.drawable cube

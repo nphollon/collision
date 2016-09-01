@@ -1,7 +1,8 @@
-module Tree exposing (Tree(..), satisfies, leaves, encode, decode, subtreeAt)
+module Tree exposing (Tree(..), CrossFunctions, satisfies, leaves, encode, decode, subtreeAt, toTheLeft, toTheRight, collisionMap)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
+import Set exposing (Set)
 
 
 type Tree a b
@@ -9,34 +10,74 @@ type Tree a b
     | Node a (Tree a b) (Tree a b)
 
 
-satisfies : (a -> c -> Bool) -> (b -> d -> Bool) -> (a -> d -> Bool) -> (b -> c -> Bool) -> Tree a b -> Tree c d -> Bool
-satisfies nodeNode leafLeaf nodeLeaf leafNode a b =
+type alias CrossFunctions a b c d =
+    { nodeNode : a -> c -> Bool
+    , leafLeaf : b -> d -> Bool
+    , nodeLeaf : a -> d -> Bool
+    , leafNode : b -> c -> Bool
+    }
+
+
+satisfies : CrossFunctions a b c d -> Tree a b -> Tree c d -> Bool
+satisfies xf a b =
     case ( a, b ) of
         ( Leaf aVal, Leaf bVal ) ->
-            leafLeaf aVal bVal
+            xf.leafLeaf aVal bVal
 
         ( Leaf aVal, Node bVal bFst bSnd ) ->
-            if leafNode aVal bVal then
-                (satisfies nodeNode leafLeaf nodeLeaf leafNode a bFst)
-                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode a bSnd)
-            else
-                False
+            xf.leafNode aVal bVal
+                && (satisfies xf a bFst || satisfies xf a bSnd)
 
         ( Node aVal aFst aSnd, Leaf bVal ) ->
-            if nodeLeaf aVal bVal then
-                (satisfies nodeNode leafLeaf nodeLeaf leafNode aFst b)
-                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode aSnd b)
-            else
-                False
+            xf.nodeLeaf aVal bVal
+                && (satisfies xf aFst b || satisfies xf aSnd b)
 
         ( Node aVal aFst aSnd, Node bVal bFst bSnd ) ->
-            if nodeNode aVal bVal then
-                (satisfies nodeNode leafLeaf nodeLeaf leafNode aFst bFst)
-                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode aFst bSnd)
-                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode aSnd bFst)
-                    || (satisfies nodeNode leafLeaf nodeLeaf leafNode aSnd bSnd)
+            xf.nodeNode aVal bVal
+                && (satisfies xf aFst bFst
+                        || satisfies xf aFst bSnd
+                        || satisfies xf aSnd bFst
+                        || satisfies xf aSnd bSnd
+                   )
+
+
+collisionMap : CrossFunctions a b c d -> Tree a b -> Tree c d -> Set ( Int, Int )
+collisionMap xf a b =
+    fold xf a b ( 0, 0 ) Set.empty
+
+
+fold : CrossFunctions a b c d -> Tree a b -> Tree c d -> ( Int, Int ) -> Set ( Int, Int ) -> Set ( Int, Int )
+fold xf a b coords hits =
+    case ( a, b ) of
+        ( Leaf aVal, Leaf bVal ) ->
+            if xf.leafLeaf aVal bVal then
+                Set.insert coords hits
             else
-                False
+                hits
+
+        ( Leaf aVal, Node bVal _ _ ) ->
+            if xf.leafNode aVal bVal then
+                Set.insert coords hits
+            else
+                hits
+
+        ( Node aVal aLeft aRight, Leaf bVal ) ->
+            if xf.nodeLeaf aVal bVal then
+                Set.insert coords hits
+                    |> fold xf aLeft b (toTheLeft coords)
+                    |> fold xf aRight b (toTheRight coords)
+            else
+                hits
+
+        ( Node aVal aLeft aRight, Node bVal bLeft bRight ) ->
+            if xf.nodeNode aVal bVal then
+                Set.insert coords hits
+                    |> fold xf aLeft bLeft (toTheLeft coords)
+                    |> fold xf aLeft bRight (toTheLeft coords)
+                    |> fold xf aRight bLeft (toTheRight coords)
+                    |> fold xf aRight bRight (toTheRight coords)
+            else
+                hits
 
 
 leaves : Tree a b -> List b
@@ -47,6 +88,16 @@ leaves tree =
 
         Node _ left right ->
             leaves left ++ leaves right
+
+
+toTheLeft : ( Int, Int ) -> ( Int, Int )
+toTheLeft ( level, offset ) =
+    ( level + 1, 2 * offset )
+
+
+toTheRight : ( Int, Int ) -> ( Int, Int )
+toTheRight ( level, offset ) =
+    ( level + 1, 2 * offset + 1 )
 
 
 subtreeAt : ( Int, Int ) -> Tree a b -> Tree a b

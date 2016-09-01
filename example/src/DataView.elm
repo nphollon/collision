@@ -1,5 +1,6 @@
 module DataView exposing (draw)
 
+import Set exposing (Set)
 import String
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -11,6 +12,7 @@ import InlineHover as Hov
 -- Collision Library
 
 import Collision exposing (Body, Bounds, Vector, Quaternion)
+import OBBTree
 import Tree exposing (Tree(..))
 
 
@@ -29,20 +31,26 @@ draw model =
                 , ( "font-weight", "normal" )
                 , ( "text-align", "center" )
                 ]
+
+        redHits =
+            OBBTree.collisionMap model.red model.blue
+
+        blueHits =
+            OBBTree.collisionMap model.blue model.red
     in
         Html.div
             [ Attr.style [ ( "width", "750px" ) ] ]
             [ Html.h2 [ titleStyle ] [ Html.text "Red" ]
             , Elements.divider
-            , App.map (SelectNode Red) (displayBody model.red)
+            , App.map (SelectNode Red) (displayBody model.red redHits)
             , Html.h2 [ titleStyle ] [ Html.text "Blue" ]
             , Elements.divider
-            , App.map (SelectNode Blue) (displayBody model.blue)
+            , App.map (SelectNode Blue) (displayBody model.blue blueHits)
             ]
 
 
-displayBody : Entity -> Html ( Int, Int )
-displayBody entity =
+displayBody : Entity -> Set ( Int, Int ) -> Html ( Int, Int )
+displayBody entity hits =
     let
         position =
             entity.frame.position
@@ -76,7 +84,11 @@ displayBody entity =
                     , ( "margin-bottom", "2rem" )
                     ]
                 ]
-                [ drawTree entity.selectedNode ( 0, 0 ) entity.bounds
+                [ drawTree
+                    hits
+                    entity.selectedNode
+                    ( 0, 0 )
+                    entity.bounds
                 ]
             ]
 
@@ -143,51 +155,61 @@ field label value =
         ]
 
 
-drawTree : ( Int, Int ) -> ( Int, Int ) -> Bounds -> Html ( Int, Int )
-drawTree selected coords tree =
-    case tree of
-        Leaf b ->
-            Html.div
-                [ Attr.style
-                    [ ( "display", "flex" )
-                    , ( "justify-content", "center" )
+drawTree : Set ( Int, Int ) -> ( Int, Int ) -> ( Int, Int ) -> Bounds -> Html ( Int, Int )
+drawTree hits selected coords tree =
+    let
+        nodeType =
+            if coords == selected then
+                Selected
+            else if Set.member coords hits then
+                Hit
+            else
+                NoHit
+    in
+        case tree of
+            Leaf b ->
+                Html.div
+                    [ Attr.style
+                        [ ( "display", "flex" )
+                        , ( "justify-content", "center" )
+                        ]
                     ]
-                ]
-                [ nodeBox selected coords ]
+                    [ nodeBox nodeType coords ]
 
-        Node a left right ->
-            Html.div
-                [ Attr.style
-                    [ ( "display", "flex" )
-                    , ( "flex-wrap", "wrap" )
-                    , ( "justify-content", "center" )
+            Node a left right ->
+                Html.div
+                    [ Attr.style
+                        [ ( "display", "flex" )
+                        , ( "flex-wrap", "wrap" )
+                        , ( "justify-content", "center" )
+                        ]
                     ]
-                ]
-                [ nodeBox selected coords
-                , branches
-                , drawChild selected (toTheLeft coords) left
-                , drawChild selected (toTheRight coords) right
-                ]
+                    [ nodeBox nodeType coords
+                    , branches
+                    , drawChild hits selected (Tree.toTheLeft coords) left
+                    , drawChild hits selected (Tree.toTheRight coords) right
+                    ]
 
 
-toTheLeft : ( Int, Int ) -> ( Int, Int )
-toTheLeft ( level, offset ) =
-    ( level + 1, 2 * offset )
+type NodeType
+    = Selected
+    | Hit
+    | NoHit
 
 
-toTheRight : ( Int, Int ) -> ( Int, Int )
-toTheRight ( level, offset ) =
-    ( level + 1, 2 * offset + 1 )
-
-
-nodeBox : ( Int, Int ) -> ( Int, Int ) -> Html ( Int, Int )
-nodeBox selected coords =
+nodeBox : NodeType -> ( Int, Int ) -> Html ( Int, Int )
+nodeBox nodeType coords =
     let
         color =
-            if selected == coords then
-                "blue"
-            else
-                "#999999"
+            case nodeType of
+                Selected ->
+                    "blue"
+
+                Hit ->
+                    "#ffaa00"
+
+                NoHit ->
+                    "#999999"
     in
         Hov.hover
             [ ( "border-color", "#999999" ) ]
@@ -205,15 +227,15 @@ nodeBox selected coords =
             []
 
 
-drawChild : ( Int, Int ) -> ( Int, Int ) -> Bounds -> Html ( Int, Int )
-drawChild selected coords tree =
+drawChild : Set ( Int, Int ) -> ( Int, Int ) -> ( Int, Int ) -> Bounds -> Html ( Int, Int )
+drawChild hits selected coords tree =
     Html.div
         [ Attr.style
             [ ( "width", "40%" )
             , ( "flex-grow", "1" )
             ]
         ]
-        [ drawTree selected coords tree ]
+        [ drawTree hits selected coords tree ]
 
 
 branches : Html a

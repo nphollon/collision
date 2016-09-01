@@ -1,8 +1,9 @@
-module OBBTree exposing (OBBTree, Body, collide, create, empty, projectAndSplit, encode, decode)
+module OBBTree exposing (OBBTree, Body, collide, create, empty, projectAndSplit, encode, decode, collisionMap)
 
+import Set exposing (Set)
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder)
-import Tree exposing (Tree(..))
+import Tree exposing (Tree(..), CrossFunctions)
 import BoundingBox exposing (BoundingBox)
 import Face exposing (Face, FaceFacts)
 import Frame exposing (Frame)
@@ -33,6 +34,22 @@ decode =
 
 collide : Body a -> Body b -> Bool
 collide bodyA bodyB =
+    Tree.satisfies
+        (crossFunctions bodyA bodyB)
+        bodyA.bounds
+        bodyB.bounds
+
+
+collisionMap : Body a -> Body b -> Set ( Int, Int )
+collisionMap bodyA bodyB =
+    Tree.collisionMap
+        (crossFunctions bodyA bodyB)
+        bodyA.bounds
+        bodyB.bounds
+
+
+crossFunctions : Body a -> Body b -> CrossFunctions BoundingBox Face BoundingBox Face
+crossFunctions bodyA bodyB =
     let
         transformAFace =
             Face.transformInto bodyA.frame
@@ -66,13 +83,11 @@ collide bodyA bodyB =
                 (transformAFace faceA)
                 (transformBBox boxB)
     in
-        Tree.satisfies
-            boxCollide
-            faceCollide
-            boxFaceCollide
-            faceBoxCollide
-            bodyA.bounds
-            bodyB.bounds
+        { nodeNode = boxCollide
+        , leafLeaf = faceCollide
+        , nodeLeaf = boxFaceCollide
+        , leafNode = faceBoxCollide
+        }
 
 
 empty : OBBTree
