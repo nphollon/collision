@@ -1,5 +1,6 @@
 module Controls exposing (draw)
 
+import String
 import Json.Decode as Json
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
@@ -40,7 +41,7 @@ draw model =
                     ( "Change Orientation", orientationControls )
 
                 ViewEditor ->
-                    ( "View Settings", viewControls )
+                    ( "View Settings", viewControls model )
     in
         Html.div
             [ Attr.style
@@ -113,7 +114,9 @@ orientationControls =
     in
         submenu
             [ inputField EditAngle "Angle (Degrees) "
-            , select toAxis
+            , select
+                toAxis
+                "x"
                 [ ( "x", "X Axis" )
                 , ( "y", "Y Axis" )
                 , ( "z", "Z Axis" )
@@ -125,42 +128,67 @@ orientationControls =
             ]
 
 
-viewControls : Html Action
-viewControls =
+viewControls : Model -> Html Action
+viewControls settings =
     let
         treeLevels =
             List.map (\i -> ( toString i, toString i )) [1..5]
+
+        setTreeLevel value =
+            String.toInt value
+                |> Result.withDefault 1
+                |> SetTreeLevel
     in
         submenu
-            [ checkbox "show-collisions" "Show collisions only"
+            [ checkbox
+                CollisionsOnly
+                settings.collisionsOnly
+                "Show collisions only"
             , Elements.spacer
-            , checkbox "show-bounds" "Show bounding boxes"
+            , checkbox
+                ShowBoxes
+                settings.showBoxes
+                "Show bounding boxes"
             , Html.div []
                 [ Html.text "Tree level"
-                , select (always (SetAxis Vector.xAxis)) treeLevels
+                , select
+                    setTreeLevel
+                    (toString settings.treeLevel)
+                    treeLevels
                 ]
             ]
 
 
-checkbox : String -> String -> Html a
-checkbox id label =
-    Html.div
-        [ Attr.style [ ( "margin", "5px" ) ] ]
-        [ Html.label [ Attr.for id ] [ Html.text label ]
-        , Html.input
-            [ Attr.type' "checkbox"
-            , Attr.style [ ( "border", "none" ) ]
-            , Attr.id id
+checkbox : (Bool -> a) -> Bool -> String -> Html a
+checkbox sendMsg isChecked label =
+    let
+        id =
+            String.toLower label
+                |> String.split " "
+                |> String.join "-"
+    in
+        Html.div
+            [ Attr.style [ ( "margin", "5px" ) ] ]
+            [ Html.label [ Attr.for id ] [ Html.text label ]
+            , Html.input
+                [ Attr.type' "checkbox"
+                , Attr.id id
+                , Attr.checked isChecked
+                , Evt.onCheck sendMsg
+                ]
+                []
             ]
-            []
-        ]
 
 
-select : (String -> a) -> List ( String, String ) -> Html a
-select sendMsg =
+select : (String -> a) -> String -> List ( String, String ) -> Html a
+select sendMsg selection =
     let
         toOption ( value, label ) =
-            Html.option [ Attr.value value ] [ Html.text label ]
+            Html.option
+                [ Attr.selected (selection == value)
+                , Attr.value value
+                ]
+                [ Html.text label ]
 
         handler =
             Evt.on "change" (Json.map sendMsg Evt.targetValue)

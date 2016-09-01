@@ -54,6 +54,9 @@ init =
         , mesh = Model.drawable cube
         , selectedNode = ( 0, 0 )
         }
+    , collisionsOnly = False
+    , showBoxes = False
+    , treeLevel = 3
     }
 
 
@@ -158,6 +161,15 @@ update action model =
                 (\body -> { body | selectedNode = coords })
                 solid
                 model
+
+        ( CollisionsOnly isChecked, _ ) ->
+            { model | collisionsOnly = isChecked }
+
+        ( ShowBoxes isChecked, _ ) ->
+            { model | showBoxes = isChecked }
+
+        ( SetTreeLevel treeLevel, _ ) ->
+            { model | treeLevel = treeLevel }
 
         _ ->
             model

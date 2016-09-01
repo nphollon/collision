@@ -14,6 +14,9 @@ type alias Model =
     { room : Room
     , red : Entity
     , blue : Entity
+    , collisionsOnly : Bool
+    , showBoxes : Bool
+    , treeLevel : Int
     }
 
 
@@ -71,3 +74,6 @@ type Action
     | IntrinsicRotate
     | ResetOrientation
     | SelectNode Solid ( Int, Int )
+    | CollisionsOnly Bool
+    | ShowBoxes Bool
+    | SetTreeLevel Int
