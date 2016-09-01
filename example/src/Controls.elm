@@ -116,6 +116,7 @@ orientationControls =
             [ inputField EditAngle "Angle (Degrees) "
             , select
                 toAxis
+                True
                 "x"
                 [ ( "x", "X Axis" )
                 , ( "y", "Y Axis" )
@@ -153,6 +154,7 @@ viewControls settings =
                 [ Html.text "Tree level"
                 , select
                     setTreeLevel
+                    settings.showBoxes
                     (toString settings.treeLevel)
                     treeLevels
                 ]
@@ -180,8 +182,8 @@ checkbox sendMsg isChecked label =
             ]
 
 
-select : (String -> a) -> String -> List ( String, String ) -> Html a
-select sendMsg selection =
+select : (String -> a) -> Bool -> String -> List ( String, String ) -> Html a
+select sendMsg isEnabled selection options =
     let
         toOption ( value, label ) =
             Html.option
@@ -193,14 +195,15 @@ select sendMsg selection =
         handler =
             Evt.on "change" (Json.map sendMsg Evt.targetValue)
     in
-        List.map toOption
-            >> Html.select
-                [ handler
-                , Attr.style
-                    [ ( "width", "5rem" )
-                    , ( "margin", "0.5rem" )
-                    ]
+        Html.select
+            [ handler
+            , Attr.disabled (not isEnabled)
+            , Attr.style
+                [ ( "width", "5rem" )
+                , ( "margin", "0.5rem" )
                 ]
+            ]
+            (List.map toOption options)
 
 
 backButton : Html Action

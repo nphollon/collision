@@ -56,7 +56,7 @@ init =
         }
     , collisionsOnly = False
     , showBoxes = False
-    , treeLevel = 3
+    , treeLevel = 1
     }
 
 
