@@ -11,6 +11,7 @@ testSuite =
     suite "Tree structure"
         [ satisfiesSuite
         , leavesSuite
+        , internalSuite
         , jsonSuite
         ]
 
@@ -87,14 +88,29 @@ leavesSuite : Test
 leavesSuite =
     suite "getting the leaves of a tree"
         [ test "Return leaf value as singleton list" <|
-            assertEqual [ 5 ]
+            assertEqual [ ( ( 0, 0 ), 5 ) ]
                 (Tree.leaves (Leaf 5))
         , test "Return both leaves of a three-node tree" <|
-            assertEqual [ 7, 8 ]
+            assertEqual [ ( ( 1, 0 ), 7 ), ( ( 1, 1 ), 8 ) ]
                 (Tree.leaves (Node 9 (Leaf 7) (Leaf 8)))
         , test "Concatenate all leaves of a multi-level tree" <|
-            assertEqual [ 1, 3, 2 ]
+            assertEqual [ ( ( 1, 0 ), 1 ), ( ( 2, 2 ), 3 ), ( ( 2, 3 ), 2 ) ]
                 (Tree.leaves (Node 0 (Leaf 1) (Node 4 (Leaf 3) (Leaf 2))))
+        ]
+
+
+internalSuite : Test
+internalSuite =
+    suite "getting the internal nodes of a tree"
+        [ test "Return leaf value as empty list" <|
+            assertEqual []
+                (Tree.internals (Leaf 5))
+        , test "Return the parent node of a three-node tree" <|
+            assertEqual [ ( ( 0, 0 ), 9 ) ]
+                (Tree.internals (Node 9 (Leaf 7) (Leaf 8)))
+        , test "Concatenate all internal nodes of a multi-level tree" <|
+            assertEqual [ ( ( 0, 0 ), 0 ), ( ( 1, 1 ), 4 ) ]
+                (Tree.internals (Node 0 (Leaf 1) (Node 4 (Leaf 3) (Leaf 2))))
         ]
 
 

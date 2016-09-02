@@ -1,4 +1,4 @@
-module Tree exposing (Tree(..), CrossFunctions, satisfies, leaves, encode, decode, subtreeAt, toTheLeft, toTheRight, collisionMap)
+module Tree exposing (Tree(..), CrossFunctions, satisfies, leaves, internals, encode, decode, subtreeAt, toTheLeft, toTheRight, collisionMap)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
@@ -80,14 +80,37 @@ fold xf a b coords hits =
                 hits
 
 
-leaves : Tree a b -> List b
+leaves : Tree a b -> List ( ( Int, Int ), b )
 leaves tree =
+    leavesRecurse ( 0, 0 ) tree
+
+
+leavesRecurse : ( Int, Int ) -> Tree a b -> List ( ( Int, Int ), b )
+leavesRecurse coords tree =
     case tree of
         Leaf a ->
-            [ a ]
+            [ ( coords, a ) ]
 
         Node _ left right ->
-            leaves left ++ leaves right
+            leavesRecurse (toTheLeft coords) left
+                ++ leavesRecurse (toTheRight coords) right
+
+
+internals : Tree a b -> List ( ( Int, Int ), a )
+internals tree =
+    internalsRecurse ( 0, 0 ) tree
+
+
+internalsRecurse : ( Int, Int ) -> Tree a b -> List ( ( Int, Int ), a )
+internalsRecurse coords tree =
+    case tree of
+        Leaf _ ->
+            []
+
+        Node a left right ->
+            ( coords, a )
+                :: internalsRecurse (toTheLeft coords) left
+                ++ internalsRecurse (toTheRight coords) right
 
 
 toTheLeft : ( Int, Int ) -> ( Int, Int )
