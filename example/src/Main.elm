@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Array
+import Set
 import String
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -10,10 +11,11 @@ import Html.App as App
 -- Collision Library
 
 import Collision
-import Vector exposing (Vector)
-import Quaternion exposing (Quaternion)
-import Frame exposing (Frame)
 import Face exposing (Face)
+import Frame exposing (Frame)
+import OBBTree
+import Quaternion exposing (Quaternion)
+import Vector exposing (Vector)
 
 
 -- Project Local
@@ -36,26 +38,29 @@ main =
 
 init : Model
 init =
-    { room = Entrance
-    , red =
-        { frame = Frame.identity
-        , bounds = Collision.create cube
-        , selectedNode = ( 0, 0 )
-        }
-    , blue =
-        { frame =
-            { position = Vector.vector 0 1.6 -2
-            , orientation =
-                Quaternion.quaternion 0.85 0.35 0.35 0.15
-                    |> Quaternion.scale (1.010101)
+    updateCollisionMap
+        { room = Entrance
+        , red =
+            { frame = Frame.identity
+            , bounds = Collision.create cube
+            , hits = Set.empty
+            , selectedNode = ( 0, 0 )
             }
-        , bounds = Collision.create cube
-        , selectedNode = ( 0, 0 )
+        , blue =
+            { frame =
+                { position = Vector.vector 0 1.6 -2
+                , orientation =
+                    Quaternion.quaternion 0.85 0.35 0.35 0.15
+                        |> Quaternion.scale (1.010101)
+                }
+            , bounds = Collision.create cube
+            , hits = Set.empty
+            , selectedNode = ( 0, 0 )
+            }
+        , collisionsOnly = False
+        , showBoxes = False
+        , treeLevel = 1
         }
-    , collisionsOnly = False
-    , showBoxes = False
-    , treeLevel = 1
-    }
 
 
 cube : List Face
@@ -179,12 +184,12 @@ type alias WithSolid a =
 
 updateFrame : (WithSolid a -> Frame -> Frame) -> WithSolid a -> Model -> Model
 updateFrame transform fields model =
-    updateEntity
-        (\body ->
+    let
+        reframe body =
             { body | frame = transform fields body.frame }
-        )
-        fields.solid
-        model
+    in
+        updateEntity reframe fields.solid model
+            |> updateCollisionMap
 
 
 updateEntity : (Entity -> Entity) -> Solid -> Model -> Model
@@ -195,6 +200,20 @@ updateEntity transform solid model =
 
         Blue ->
             { model | blue = transform model.blue }
+
+
+updateCollisionMap : Model -> Model
+updateCollisionMap model =
+    let
+        remap =
+            (\object other ->
+                { object | hits = OBBTree.collisionMap object other }
+            )
+    in
+        { model
+            | red = remap model.red model.blue
+            , blue = remap model.blue model.red
+        }
 
 
 parseVector : PositionFields -> Vector

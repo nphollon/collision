@@ -1,5 +1,6 @@
 module Types exposing (..)
 
+import Set exposing (Set)
 import Math.Vector3 exposing (Vec3)
 
 
@@ -22,6 +23,7 @@ type alias Model =
 type alias Entity =
     Body
         { selectedNode : ( Int, Int )
+        , hits : Set ( Int, Int )
         }
 
 

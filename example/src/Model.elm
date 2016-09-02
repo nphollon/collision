@@ -1,6 +1,7 @@
-module Model exposing (toFaces, drawable, boxMesh, MeshData)
+module Model exposing (toFaces, drawable, boxMesh, boxMeshWithWhitelist, MeshData)
 
 import Array exposing (Array)
+import Set exposing (Set)
 import Maybe.Extra as MaybeX
 import Math.Vector3 as Vec3 exposing (Vec3)
 import WebGL exposing (Drawable(..))
@@ -35,7 +36,31 @@ boxMesh depth tree =
 
         keepInternal ( ( level, _ ), _ ) =
             level == depth - 1
+    in
+        boxMeshWithFilters keepLeaf keepInternal tree
 
+
+boxMeshWithWhitelist : Set ( Int, Int ) -> Int -> Bounds -> Drawable Vertex
+boxMeshWithWhitelist whitelist depth tree =
+    let
+        keepLeaf ( ( level, offset ), _ ) =
+            (level < depth)
+                && Set.member ( level, offset ) whitelist
+
+        keepInternal ( ( level, offset ), _ ) =
+            (level == depth - 1)
+                && Set.member ( level, offset ) whitelist
+    in
+        boxMeshWithFilters keepLeaf keepInternal tree
+
+
+type alias Indexed a =
+    ( ( Int, Int ), a )
+
+
+boxMeshWithFilters : (Indexed Face -> Bool) -> (Indexed BoundingBox -> Bool) -> Bounds -> Drawable Vertex
+boxMeshWithFilters keepLeaf keepInternal tree =
+    let
         leaves =
             Tree.leaves tree
                 |> List.filter keepLeaf

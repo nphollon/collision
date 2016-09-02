@@ -42,15 +42,15 @@ draw model =
             [ Attr.style [ ( "width", "750px" ) ] ]
             [ Html.h2 [ titleStyle ] [ Html.text "Red" ]
             , Elements.divider
-            , App.map (SelectNode Red) (displayBody model.red redHits)
+            , App.map (SelectNode Red) (displayBody model.red)
             , Html.h2 [ titleStyle ] [ Html.text "Blue" ]
             , Elements.divider
-            , App.map (SelectNode Blue) (displayBody model.blue blueHits)
+            , App.map (SelectNode Blue) (displayBody model.blue)
             ]
 
 
-displayBody : Entity -> Set ( Int, Int ) -> Html ( Int, Int )
-displayBody entity hits =
+displayBody : Entity -> Html ( Int, Int )
+displayBody entity =
     let
         position =
             entity.frame.position
@@ -85,7 +85,7 @@ displayBody entity hits =
                     ]
                 ]
                 [ drawTree
-                    hits
+                    entity.hits
                     entity.selectedNode
                     ( 0, 0 )
                     entity.bounds

@@ -21,30 +21,38 @@ import Model
 
 draw : Model -> Html a
 draw model =
+    Html.div [ Attr.style [ ( "height", "500" ) ] ]
+        [ WebGL.toHtml
+            [ Attr.width 500
+            , Attr.height 500
+            , Attr.style [ ( "background-color", "#d0f0ff" ) ]
+            ]
+            [ drawSolid model Red model.red
+            , drawSolid model Blue model.blue
+            ]
+        ]
+
+
+mesh : Model -> Entity -> Drawable Vertex
+mesh settings entity =
     let
         depth =
-            if model.showBoxes then
-                model.treeLevel
+            if settings.showBoxes then
+                settings.treeLevel
             else
                 5
     in
-        Html.div [ Attr.style [ ( "height", "500" ) ] ]
-            [ WebGL.toHtml
-                [ Attr.width 500
-                , Attr.height 500
-                , Attr.style [ ( "background-color", "#d0f0ff" ) ]
-                ]
-                [ drawSolid depth Red model.red
-                , drawSolid depth Blue model.blue
-                ]
-            ]
+        if settings.collisionsOnly then
+            Model.boxMeshWithWhitelist entity.hits depth entity.bounds
+        else
+            Model.boxMesh depth entity.bounds
 
 
-drawSolid : Int -> Solid -> Entity -> Renderable
-drawSolid depth solid entity =
+drawSolid : Model -> Solid -> Entity -> Renderable
+drawSolid model solid entity =
     WebGL.render vertexShader
         fragmentShader
-        (Model.boxMesh depth entity.bounds)
+        (mesh model entity)
         (uniform solid entity.frame)
 
 
