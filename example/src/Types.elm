@@ -1,6 +1,5 @@
 module Types exposing (..)
 
-import WebGL exposing (Drawable)
 import Math.Vector3 exposing (Vec3)
 
 
@@ -22,8 +21,7 @@ type alias Model =
 
 type alias Entity =
     Body
-        { mesh : Drawable Vertex
-        , selectedNode : ( Int, Int )
+        { selectedNode : ( Int, Int )
         }
 
 

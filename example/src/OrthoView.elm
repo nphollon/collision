@@ -16,27 +16,35 @@ import Vector
 -- Project Local
 
 import Types exposing (..)
+import Model
 
 
 draw : Model -> Html a
 draw model =
-    Html.div [ Attr.style [ ( "height", "500" ) ] ]
-        [ WebGL.toHtml
-            [ Attr.width 500
-            , Attr.height 500
-            , Attr.style [ ( "background-color", "#d0f0ff" ) ]
+    let
+        depth =
+            if model.showBoxes then
+                model.treeLevel
+            else
+                5
+    in
+        Html.div [ Attr.style [ ( "height", "500" ) ] ]
+            [ WebGL.toHtml
+                [ Attr.width 500
+                , Attr.height 500
+                , Attr.style [ ( "background-color", "#d0f0ff" ) ]
+                ]
+                [ drawSolid depth Red model.red
+                , drawSolid depth Blue model.blue
+                ]
             ]
-            [ drawSolid Red model.red
-            , drawSolid Blue model.blue
-            ]
-        ]
 
 
-drawSolid : Solid -> Entity -> Renderable
-drawSolid solid entity =
+drawSolid : Int -> Solid -> Entity -> Renderable
+drawSolid depth solid entity =
     WebGL.render vertexShader
         fragmentShader
-        entity.mesh
+        (Model.boxMesh depth entity.bounds)
         (uniform solid entity.frame)
 
 

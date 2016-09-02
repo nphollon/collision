@@ -1,4 +1,4 @@
-module Model exposing (toFaces, drawable, MeshData)
+module Model exposing (toFaces, drawable, boxMesh, MeshData)
 
 import Array exposing (Array)
 import Maybe.Extra as MaybeX
@@ -10,6 +10,10 @@ import WebGL exposing (Drawable(..))
 
 import Vector exposing (Vector)
 import Face exposing (Face)
+import Collision exposing (Bounds)
+import BoundingBox exposing (BoundingBox)
+import Tree
+import Frame
 
 
 -- Project local
@@ -21,6 +25,29 @@ type alias MeshData =
     { vertexPositions : Array Vector
     , vertexIndexes : List (List Int)
     }
+
+
+boxMesh : Int -> Bounds -> Drawable Vertex
+boxMesh depth tree =
+    let
+        keepLeaf ( ( level, _ ), _ ) =
+            level < depth
+
+        keepInternal ( ( level, _ ), _ ) =
+            level == depth - 1
+
+        leaves =
+            Tree.leaves tree
+                |> List.filter keepLeaf
+                |> List.map snd
+
+        internals =
+            Tree.internals tree
+                |> List.filter keepInternal
+                |> List.map snd
+                |> List.concatMap boxFaces
+    in
+        drawable (leaves ++ internals)
 
 
 drawable : List Face -> Drawable Vertex
@@ -67,3 +94,33 @@ toVertex position normal =
     { position = Vec3.fromRecord position
     , normal = Vec3.fromRecord normal
     }
+
+
+boxFaces : BoundingBox -> List Face
+boxFaces box =
+    let
+        vector signX signY signZ =
+            Vector.vector (signX * box.a) (signY * box.b) (signZ * box.c)
+                |> Frame.transformOutOf box.frame
+    in
+        toFaces
+            { vertexPositions =
+                Array.fromList
+                    [ vector -1 1 1
+                    , vector 1 1 1
+                    , vector 1 -1 1
+                    , vector -1 -1 1
+                    , vector -1 1 -1
+                    , vector 1 1 -1
+                    , vector 1 -1 -1
+                    , vector -1 -1 -1
+                    ]
+            , vertexIndexes =
+                [ [ 3, 2, 1, 0 ]
+                , [ 5, 4, 0, 1 ]
+                , [ 6, 5, 1, 2 ]
+                , [ 7, 6, 2, 3 ]
+                , [ 7, 3, 0, 4 ]
+                , [ 7, 4, 5, 6 ]
+                ]
+            }

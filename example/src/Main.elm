@@ -40,7 +40,6 @@ init =
     , red =
         { frame = Frame.identity
         , bounds = Collision.create cube
-        , mesh = Model.drawable cube
         , selectedNode = ( 0, 0 )
         }
     , blue =
@@ -51,7 +50,6 @@ init =
                     |> Quaternion.scale (1.010101)
             }
         , bounds = Collision.create cube
-        , mesh = Model.drawable cube
         , selectedNode = ( 0, 0 )
         }
     , collisionsOnly = False
