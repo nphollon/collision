@@ -6,6 +6,7 @@ import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
 import Html.Events as Evt
 import InlineHover as Hov
+import Ease
 
 
 -- Collision Library
@@ -60,9 +61,9 @@ roomAppearance model room =
         ViewEditor ->
             ( "View Settings", viewControls model )
 
-        Easing { origin, destination, time } ->
+        Transition { origin, destination, progress } ->
             ( "..."
-            , transition time
+            , transition progress
                 (snd (roomAppearance model origin))
                 (snd (roomAppearance model destination))
             )
@@ -86,7 +87,7 @@ offsetDiv : Float -> Html a -> Html a
 offsetDiv fraction content =
     let
         percent =
-            round (fraction * 100)
+            round (100 * Ease.inOutCubic fraction)
 
         percentString =
             toString percent ++ "%"

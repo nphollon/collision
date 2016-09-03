@@ -3,7 +3,7 @@ module Main exposing (main)
 import Array
 import Set
 import String
-import Time
+import Time exposing (Time)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.App as App
@@ -42,18 +42,7 @@ main =
 init : Model
 init =
     updateCollisionMap
-        { room =
-            Easing
-                { origin = Entrance
-                , destination =
-                    PositionEditor
-                        { xText = ""
-                        , yText = ""
-                        , zText = ""
-                        , solid = Red
-                        }
-                , time = 0.8
-                }
+        { room = Entrance
         , red =
             { frame = Frame.identity
             , bounds = Collision.create cube
@@ -105,11 +94,16 @@ cube =
 subscriptions : Model -> Sub Action
 subscriptions model =
     case model.room of
-        Easing _ ->
-            AnimationFrame.diffs (Time.inSeconds >> Tick)
+        Transition _ ->
+            AnimationFrame.diffs animationFraction
 
         _ ->
             Sub.none
+
+
+animationFraction : Time -> Action
+animationFraction dt =
+    Tick (Time.inMilliseconds dt / Time.inMilliseconds 350)
 
 
 update : Action -> Model -> Model
@@ -118,24 +112,11 @@ update action model =
         --
         -- Navigate the UI
         --
-        ( Tick dt, Easing easing ) ->
-            if easing.time >= 1 then
-                { model | room = easing.destination }
-            else
-                { model
-                    | room =
-                        Easing { easing | time = easing.time + dt }
-                }
+        ( Tick dt, Transition easing ) ->
+            { model | room = tick dt easing }
 
         ( ChangeRoom room, _ ) ->
-            { model
-                | room =
-                    Easing
-                        { origin = model.room
-                        , destination = room
-                        , time = 0
-                        }
-            }
+            easeInto room model
 
         ( EditX xText, PositionEditor fields ) ->
             { model | room = PositionEditor { fields | xText = xText } }
@@ -275,6 +256,26 @@ toFloat : String -> Float
 toFloat text =
     String.toFloat text
         |> Result.withDefault 0
+
+
+easeInto : Room -> Model -> Model
+easeInto newRoom model =
+    { model
+        | room =
+            Transition
+                { origin = model.room
+                , destination = newRoom
+                , progress = 0
+                }
+    }
+
+
+tick : Float -> TransitionDetails -> Room
+tick dt easing =
+    if easing.progress < 1 then
+        Transition { easing | progress = easing.progress + dt }
+    else
+        easing.destination
 
 
 view : Model -> Html Action

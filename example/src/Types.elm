@@ -32,11 +32,7 @@ type Room
     | PositionEditor PositionFields
     | OrientationEditor OrientationFields
     | ViewEditor
-    | Easing
-        { origin : Room
-        , destination : Room
-        , time : Float
-        }
+    | Transition TransitionDetails
 
 
 type alias PositionFields =
@@ -57,6 +53,13 @@ type alias OrientationFields =
 type Solid
     = Red
     | Blue
+
+
+type alias TransitionDetails =
+    { origin : Room
+    , destination : Room
+    , progress : Float
+    }
 
 
 type alias Vertex =
