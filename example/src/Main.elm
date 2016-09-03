@@ -116,7 +116,10 @@ update action model =
             { model | room = tick dt easing }
 
         ( ChangeRoom room, _ ) ->
-            easeInto room model
+            beginTransition False room model
+
+        ( BackToEntrance, _ ) ->
+            beginTransition True Entrance model
 
         ( EditX xText, PositionEditor fields ) ->
             { model | room = PositionEditor { fields | xText = xText } }
@@ -258,14 +261,15 @@ toFloat text =
         |> Result.withDefault 0
 
 
-easeInto : Room -> Model -> Model
-easeInto newRoom model =
+beginTransition : Bool -> Room -> Model -> Model
+beginTransition returning newRoom model =
     { model
         | room =
             Transition
                 { origin = model.room
                 , destination = newRoom
                 , progress = 0
+                , returning = returning
                 }
     }
 

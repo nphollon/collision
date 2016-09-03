@@ -61,26 +61,37 @@ roomAppearance model room =
         ViewEditor ->
             ( "View Settings", viewControls model )
 
-        Transition { origin, destination, progress } ->
-            ( "..."
-            , transition progress
-                (snd (roomAppearance model origin))
-                (snd (roomAppearance model destination))
-            )
+        Transition settings ->
+            ( "...", transition settings model )
 
 
-transition : Float -> Html a -> Html a -> Html a
-transition fraction left right =
-    Html.div
-        [ Attr.style
-            [ ( "position", "relative" )
-            , ( "overflow", "hidden" )
-            , ( "height", "100%" )
+transition : TransitionDetails -> Model -> Html Action
+transition settings model =
+    let
+        origin =
+            snd (roomAppearance model settings.origin)
+
+        destination =
+            snd (roomAppearance model settings.destination)
+
+        content =
+            if settings.returning then
+                [ offsetDiv (min 1 (settings.progress - 1)) destination
+                , offsetDiv settings.progress origin
+                ]
+            else
+                [ offsetDiv -settings.progress origin
+                , offsetDiv (max 0 (1 - settings.progress)) destination
+                ]
+    in
+        Html.div
+            [ Attr.style
+                [ ( "position", "relative" )
+                , ( "overflow", "hidden" )
+                , ( "height", "100%" )
+                ]
             ]
-        ]
-        [ offsetDiv -fraction left
-        , offsetDiv (max 0 (1 - fraction)) right
-        ]
+            content
 
 
 offsetDiv : Float -> Html a -> Html a
@@ -254,7 +265,7 @@ select sendMsg isEnabled selection options =
 
 backButton : Html Action
 backButton =
-    button (ChangeRoom Entrance) "Back"
+    button BackToEntrance "Back"
 
 
 inputField : (String -> msg) -> String -> Html msg

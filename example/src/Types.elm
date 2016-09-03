@@ -59,6 +59,7 @@ type alias TransitionDetails =
     { origin : Room
     , destination : Room
     , progress : Float
+    , returning : Bool
     }
 
 
@@ -75,6 +76,7 @@ type Action
     | EditAngle String
     | SetAxis Vector
     | ChangeRoom Room
+    | BackToEntrance
     | SetPosition
     | ExtrinsicNudge
     | IntrinsicNudge
