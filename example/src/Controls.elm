@@ -23,13 +23,6 @@ import Elements
 draw : Model -> Html Action
 draw model =
     let
-        titleStyle =
-            Attr.style
-                [ ( "font-size", "1.2rem" )
-                , ( "font-weight", "normal" )
-                , ( "text-align", "center" )
-                ]
-
         ( title, controls ) =
             roomAppearance model model.room
     in
@@ -40,58 +33,69 @@ draw model =
                 , ( "width", "250px" )
                 ]
             ]
-            [ Html.h1 [ titleStyle ] [ Html.text title ]
-            , Elements.divider
-            , controls
+            [ Html.div
+                [ Attr.style
+                    [ ( "position", "relative" )
+                    , ( "overflow", "hidden" )
+                    , ( "height", "10%" )
+                    ]
+                ]
+                [ title
+                ]
+            , Html.div
+                [ Attr.style
+                    [ ( "position", "relative" )
+                    , ( "overflow", "hidden" )
+                    , ( "height", "90%" )
+                    ]
+                ]
+                [ Elements.divider
+                , controls
+                ]
             ]
 
 
-roomAppearance : Model -> Room -> ( String, Html Action )
+roomAppearance : Model -> Room -> ( Html Action, Html Action )
 roomAppearance model room =
     case room of
         Entrance ->
-            ( "Collision Test", entranceControls )
+            ( title "Collision Test", entranceControls )
 
         PositionEditor _ ->
-            ( "Change Position", positionControls )
+            ( title "Change Position", positionControls )
 
         OrientationEditor _ ->
-            ( "Change Orientation", orientationControls )
+            ( title "Change Orientation", orientationControls )
 
         ViewEditor ->
-            ( "View Settings", viewControls model )
+            ( title "View Settings", viewControls model )
 
         Transition settings ->
-            ( "...", transition settings model )
+            transition settings model
 
 
-transition : TransitionDetails -> Model -> Html Action
+transition : TransitionDetails -> Model -> ( Html Action, Html Action )
 transition settings model =
     let
-        origin =
-            snd (roomAppearance model settings.origin)
+        ( fromTitle, fromContent ) =
+            roomAppearance model settings.origin
 
-        destination =
-            snd (roomAppearance model settings.destination)
+        ( toTitle, toContent ) =
+            roomAppearance model settings.destination
 
-        content =
+        slide from to =
             if settings.returning then
-                [ offsetDiv (min 1 (settings.progress - 1)) destination
-                , offsetDiv settings.progress origin
-                ]
+                Html.div []
+                    [ offsetDiv (min 0 (settings.progress - 1)) to
+                    , offsetDiv settings.progress from
+                    ]
             else
-                [ offsetDiv -settings.progress origin
-                , offsetDiv (max 0 (1 - settings.progress)) destination
-                ]
+                Html.div []
+                    [ offsetDiv (max 0 (1 - settings.progress)) to
+                    , offsetDiv -settings.progress from
+                    ]
     in
-        Html.div
-            [ Attr.style
-                [ ( "position", "relative" )
-                , ( "overflow", "hidden" )
-                , ( "height", "100%" )
-                ]
-            ]
-            content
+        ( slide fromTitle toTitle, slide fromContent toContent )
 
 
 offsetDiv : Float -> Html a -> Html a
@@ -111,6 +115,18 @@ offsetDiv fraction content =
                 ]
             ]
             [ content ]
+
+
+title : String -> Html a
+title label =
+    Html.h1
+        [ Attr.style
+            [ ( "font-size", "1.2rem" )
+            , ( "font-weight", "normal" )
+            , ( "text-align", "center" )
+            ]
+        ]
+        [ Html.text label ]
 
 
 entranceControls : Html Action
