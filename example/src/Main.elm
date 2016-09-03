@@ -3,9 +3,11 @@ module Main exposing (main)
 import Array
 import Set
 import String
+import Time
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.App as App
+import AnimationFrame
 
 
 -- Collision Library
@@ -29,9 +31,10 @@ import Model
 
 main : Program Never
 main =
-    App.beginnerProgram
-        { model = init
-        , update = update
+    App.program
+        { init = init ! []
+        , update = \action model -> update action model ! []
+        , subscriptions = subscriptions
         , view = view
         }
 
@@ -39,7 +42,18 @@ main =
 init : Model
 init =
     updateCollisionMap
-        { room = Entrance
+        { room =
+            Easing
+                { origin = Entrance
+                , destination =
+                    PositionEditor
+                        { xText = ""
+                        , yText = ""
+                        , zText = ""
+                        , solid = Red
+                        }
+                , time = 0.8
+                }
         , red =
             { frame = Frame.identity
             , bounds = Collision.create cube
@@ -88,14 +102,40 @@ cube =
         }
 
 
+subscriptions : Model -> Sub Action
+subscriptions model =
+    case model.room of
+        Easing _ ->
+            AnimationFrame.diffs (Time.inSeconds >> Tick)
+
+        _ ->
+            Sub.none
+
+
 update : Action -> Model -> Model
 update action model =
     case ( action, model.room ) of
         --
         -- Navigate the UI
         --
+        ( Tick dt, Easing easing ) ->
+            if easing.time >= 1 then
+                { model | room = easing.destination }
+            else
+                { model
+                    | room =
+                        Easing { easing | time = easing.time + dt }
+                }
+
         ( ChangeRoom room, _ ) ->
-            { model | room = room }
+            { model
+                | room =
+                    Easing
+                        { origin = model.room
+                        , destination = room
+                        , time = 0
+                        }
+            }
 
         ( EditX xText, PositionEditor fields ) ->
             { model | room = PositionEditor { fields | xText = xText } }

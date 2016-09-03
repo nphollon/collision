@@ -30,18 +30,7 @@ draw model =
                 ]
 
         ( title, controls ) =
-            case model.room of
-                Entrance ->
-                    ( "Collision Test", entranceControls )
-
-                PositionEditor _ ->
-                    ( "Change Position", positionControls )
-
-                OrientationEditor _ ->
-                    ( "Change Orientation", orientationControls )
-
-                ViewEditor ->
-                    ( "View Settings", viewControls model )
+            roomAppearance model model.room
     in
         Html.div
             [ Attr.style
@@ -54,6 +43,62 @@ draw model =
             , Elements.divider
             , controls
             ]
+
+
+roomAppearance : Model -> Room -> ( String, Html Action )
+roomAppearance model room =
+    case room of
+        Entrance ->
+            ( "Collision Test", entranceControls )
+
+        PositionEditor _ ->
+            ( "Change Position", positionControls )
+
+        OrientationEditor _ ->
+            ( "Change Orientation", orientationControls )
+
+        ViewEditor ->
+            ( "View Settings", viewControls model )
+
+        Easing { origin, destination, time } ->
+            ( "..."
+            , transition time
+                (snd (roomAppearance model origin))
+                (snd (roomAppearance model destination))
+            )
+
+
+transition : Float -> Html a -> Html a -> Html a
+transition fraction left right =
+    Html.div
+        [ Attr.style
+            [ ( "position", "relative" )
+            , ( "overflow", "hidden" )
+            , ( "height", "100%" )
+            ]
+        ]
+        [ offsetDiv -fraction left
+        , offsetDiv (max 0 (1 - fraction)) right
+        ]
+
+
+offsetDiv : Float -> Html a -> Html a
+offsetDiv fraction content =
+    let
+        percent =
+            round (fraction * 100)
+
+        percentString =
+            toString percent ++ "%"
+    in
+        Html.div
+            [ Attr.style
+                [ ( "position", "absolute" )
+                , ( "margin-left", percentString )
+                , ( "width", "100%" )
+                ]
+            ]
+            [ content ]
 
 
 entranceControls : Html Action

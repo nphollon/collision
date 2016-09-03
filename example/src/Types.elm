@@ -32,6 +32,11 @@ type Room
     | PositionEditor PositionFields
     | OrientationEditor OrientationFields
     | ViewEditor
+    | Easing
+        { origin : Room
+        , destination : Room
+        , time : Float
+        }
 
 
 type alias PositionFields =
@@ -77,3 +82,4 @@ type Action
     | CollisionsOnly Bool
     | ShowBoxes Bool
     | SetTreeLevel Int
+    | Tick Float
