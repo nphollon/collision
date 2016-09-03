@@ -127,6 +127,7 @@ meshes : Dict String (List Face)
 meshes =
     Dict.fromList
         [ ( "cube", cube )
+        , ( "tetrahedron", tetrahedron )
         ]
 
 
@@ -151,6 +152,25 @@ cube =
             , [ 7, 6, 2, 3 ]
             , [ 7, 3, 0, 4 ]
             , [ 7, 4, 5, 6 ]
+            ]
+        }
+
+
+tetrahedron : List Face
+tetrahedron =
+    toFaces
+        { vertexPositions =
+            Array.fromList
+                [ Vector.vector (3 / sqrt 3) 0 -(3 / sqrt 24)
+                , Vector.vector -(3 / sqrt 12) 1.5 -(3 / sqrt 24)
+                , Vector.vector -(3 / sqrt 12) -1.5 -(3 / sqrt 24)
+                , Vector.vector 0 0 (3 * sqrt 0.375)
+                ]
+        , vertexIndexes =
+            [ [ 0, 1, 2 ]
+            , [ 0, 2, 3 ]
+            , [ 1, 2, 3 ]
+            , [ 0, 1, 3 ]
             ]
         }
 
