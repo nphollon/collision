@@ -1,6 +1,5 @@
 module Main exposing (main)
 
-import Array
 import Set
 import String
 import Time exposing (Time)
@@ -12,8 +11,6 @@ import AnimationFrame
 
 -- Collision Library
 
-import Collision
-import Face exposing (Face)
 import Frame exposing (Frame)
 import OBBTree
 import Quaternion exposing (Quaternion)
@@ -26,7 +23,7 @@ import Types exposing (..)
 import Controls
 import OrthoView
 import DataView
-import Model
+import Mesh
 
 
 main : Program Never
@@ -41,56 +38,36 @@ main =
 
 init : Model
 init =
-    updateCollisionMap
-        { room = Entrance
-        , red =
-            { frame = Frame.identity
-            , bounds = Collision.create cube
-            , hits = Set.empty
-            , selectedNode = ( 0, 0 )
-            , shape = "icosahedron"
-            }
-        , blue =
-            { frame =
-                { position = Vector.vector 0 1.6 -2
-                , orientation =
-                    Quaternion.quaternion 0.85 0.35 0.35 0.15
-                        |> Quaternion.scale (1.010101)
+    let
+        shape =
+            List.head Mesh.options
+                |> Maybe.withDefault ""
+    in
+        updateCollisionMap
+            { room = Entrance
+            , red =
+                { frame = Frame.identity
+                , bounds = Mesh.byName shape
+                , hits = Set.empty
+                , selectedNode = ( 0, 0 )
+                , shape = shape
                 }
-            , bounds = Collision.create cube
-            , hits = Set.empty
-            , selectedNode = ( 0, 0 )
-            , shape = "ring"
+            , blue =
+                { frame =
+                    { position = Vector.vector 0 1.6 -2
+                    , orientation =
+                        Quaternion.quaternion 0.85 0.35 0.35 0.15
+                            |> Quaternion.scale (1.010101)
+                    }
+                , bounds = Mesh.byName shape
+                , hits = Set.empty
+                , selectedNode = ( 0, 0 )
+                , shape = shape
+                }
+            , collisionsOnly = False
+            , showBoxes = False
+            , treeLevel = 1
             }
-        , collisionsOnly = False
-        , showBoxes = False
-        , treeLevel = 1
-        }
-
-
-cube : List Face
-cube =
-    Model.toFaces
-        { vertexPositions =
-            Array.fromList
-                [ Vector.vector -1 1 1
-                , Vector.vector 1 1 1
-                , Vector.vector 1 -1 1
-                , Vector.vector -1 -1 1
-                , Vector.vector -1 1 -1
-                , Vector.vector 1 1 -1
-                , Vector.vector 1 -1 -1
-                , Vector.vector -1 -1 -1
-                ]
-        , vertexIndexes =
-            [ [ 3, 2, 1, 0 ]
-            , [ 5, 4, 0, 1 ]
-            , [ 6, 5, 1, 2 ]
-            , [ 7, 6, 2, 3 ]
-            , [ 7, 3, 0, 4 ]
-            , [ 7, 4, 5, 6 ]
-            ]
-        }
 
 
 subscriptions : Model -> Sub Action
@@ -184,7 +161,12 @@ update action model =
 
         ( SetShape solid newShape, ShapeEditor ) ->
             updateEntity
-                (\body -> { body | shape = newShape })
+                (\body ->
+                    { body
+                        | shape = newShape
+                        , bounds = Mesh.byName newShape
+                    }
+                )
                 solid
                 model
 

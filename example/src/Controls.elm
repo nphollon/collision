@@ -1,5 +1,6 @@
 module Controls exposing (draw)
 
+import Char
 import String
 import Json.Decode as Json
 import Html exposing (Html, Attribute)
@@ -18,6 +19,7 @@ import Vector exposing (Vector)
 
 import Types exposing (..)
 import Elements
+import Mesh
 
 
 draw : Model -> Html Action
@@ -208,25 +210,29 @@ orientationControls =
 
 shapeControls : Model -> Html Action
 shapeControls model =
-    submenu
-        [ Html.text "Red Shape"
-        , select (SetShape Red)
-            True
-            model.red.shape
-            [ ( "cube", "Cube" )
-            , ( "icosahedron", "Icosahedron" )
-            , ( "ring", "Ring" )
+    let
+        shapeOptions =
+            List.map
+                (\name -> ( name, capitalize name ))
+                Mesh.options
+    in
+        submenu
+            [ Html.text "Red Shape"
+            , select (SetShape Red) True model.red.shape shapeOptions
+            , Elements.spacer
+            , Html.text "Blue Shape"
+            , select (SetShape Blue) True model.blue.shape shapeOptions
             ]
-        , Elements.spacer
-        , Html.text "Blue Shape"
-        , select (SetShape Blue)
-            True
-            model.blue.shape
-            [ ( "cube", "Cube" )
-            , ( "icosahedron", "Icosahedron" )
-            , ( "ring", "Ring" )
-            ]
-        ]
+
+
+capitalize : String -> String
+capitalize text =
+    case String.uncons text of
+        Just ( head, tail ) ->
+            String.cons (Char.toUpper head) tail
+
+        Nothing ->
+            text
 
 
 viewControls : Model -> Html Action

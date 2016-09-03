@@ -16,7 +16,7 @@ import Vector
 -- Project Local
 
 import Types exposing (..)
-import Model
+import Mesh
 
 
 draw : Model -> Html a
@@ -43,9 +43,9 @@ mesh settings entity =
                 5
     in
         if settings.collisionsOnly then
-            Model.boxMeshWithWhitelist entity.hits depth entity.bounds
+            Mesh.whitelistedBoxes entity.hits depth entity.bounds
         else
-            Model.boxMesh depth entity.bounds
+            Mesh.boxes depth entity.bounds
 
 
 drawSolid : Model -> Solid -> Entity -> Renderable
