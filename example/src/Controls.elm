@@ -67,6 +67,9 @@ roomAppearance model room =
         OrientationEditor _ ->
             ( title "Change Orientation", orientationControls )
 
+        ShapeEditor ->
+            ( title "Change Shapes", shapeControls model )
+
         ViewEditor ->
             ( title "View Settings", viewControls model )
 
@@ -157,6 +160,7 @@ entranceControls =
             , button (editPositionFor Blue) "Blue Position"
             , button (editOrientationFor Blue) "Blue Orientation"
             , Elements.spacer
+            , button (ChangeRoom ShapeEditor) "Shapes"
             , button (ChangeRoom ViewEditor) "View Settings"
             ]
 
@@ -200,6 +204,29 @@ orientationControls =
             , button IntrinsicRotate "Intrinsic Rotate"
             , button ResetOrientation "Reset"
             ]
+
+
+shapeControls : Model -> Html Action
+shapeControls model =
+    submenu
+        [ Html.text "Red Shape"
+        , select (SetShape Red)
+            True
+            model.red.shape
+            [ ( "cube", "Cube" )
+            , ( "icosahedron", "Icosahedron" )
+            , ( "ring", "Ring" )
+            ]
+        , Elements.spacer
+        , Html.text "Blue Shape"
+        , select (SetShape Blue)
+            True
+            model.blue.shape
+            [ ( "cube", "Cube" )
+            , ( "icosahedron", "Icosahedron" )
+            , ( "ring", "Ring" )
+            ]
+        ]
 
 
 viewControls : Model -> Html Action

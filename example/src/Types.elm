@@ -24,6 +24,7 @@ type alias Entity =
     Body
         { selectedNode : ( Int, Int )
         , hits : Set ( Int, Int )
+        , shape : String
         }
 
 
@@ -31,6 +32,7 @@ type Room
     = Entrance
     | PositionEditor PositionFields
     | OrientationEditor OrientationFields
+    | ShapeEditor
     | ViewEditor
     | Transition TransitionDetails
 
@@ -83,6 +85,7 @@ type Action
     | ExtrinsicRotate
     | IntrinsicRotate
     | ResetOrientation
+    | SetShape Solid String
     | SelectNode Solid ( Int, Int )
     | CollisionsOnly Bool
     | ShowBoxes Bool

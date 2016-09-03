@@ -48,6 +48,7 @@ init =
             , bounds = Collision.create cube
             , hits = Set.empty
             , selectedNode = ( 0, 0 )
+            , shape = "icosahedron"
             }
         , blue =
             { frame =
@@ -59,6 +60,7 @@ init =
             , bounds = Collision.create cube
             , hits = Set.empty
             , selectedNode = ( 0, 0 )
+            , shape = "ring"
             }
         , collisionsOnly = False
         , showBoxes = False
@@ -180,6 +182,12 @@ update action model =
                 fields
                 model
 
+        ( SetShape solid newShape, ShapeEditor ) ->
+            updateEntity
+                (\body -> { body | shape = newShape })
+                solid
+                model
+
         --
         -- Change what information is displayed
         --
@@ -208,22 +216,22 @@ type alias WithSolid a =
 
 updateFrame : (WithSolid a -> Frame -> Frame) -> WithSolid a -> Model -> Model
 updateFrame transform fields model =
-    let
-        reframe body =
-            { body | frame = transform fields body.frame }
-    in
-        updateEntity reframe fields.solid model
-            |> updateCollisionMap
+    updateEntity
+        (\body -> { body | frame = transform fields body.frame })
+        fields.solid
+        model
 
 
 updateEntity : (Entity -> Entity) -> Solid -> Model -> Model
 updateEntity transform solid model =
     case solid of
         Red ->
-            { model | red = transform model.red }
+            updateCollisionMap
+                { model | red = transform model.red }
 
         Blue ->
-            { model | blue = transform model.blue }
+            updateCollisionMap
+                { model | blue = transform model.blue }
 
 
 updateCollisionMap : Model -> Model
