@@ -128,6 +128,8 @@ meshes =
     Dict.fromList
         [ ( "cube", cube )
         , ( "tetrahedron", tetrahedron )
+        , ( "icosahedron", icosahedron )
+        , ( "ring", ring )
         ]
 
 
@@ -171,6 +173,94 @@ tetrahedron =
             , [ 0, 2, 3 ]
             , [ 1, 2, 3 ]
             , [ 0, 1, 3 ]
+            ]
+        }
+
+
+icosahedron : List Face
+icosahedron =
+    toFaces
+        { vertexPositions =
+            Array.fromList
+                [ Vector.vector 0 0 0
+                , Vector.vector 0 -1 0
+                , Vector.vector 0.7236 -0.447215 0.52572
+                , Vector.vector -0.276385 -0.447215 0.85064
+                , Vector.vector -0.894425 -0.447215 0
+                , Vector.vector -0.276385 -0.447215 -0.85064
+                , Vector.vector 0.7236 -0.447215 -0.52572
+                , Vector.vector 0.276385 0.447215 0.85064
+                , Vector.vector -0.7236 0.447215 0.52572
+                , Vector.vector -0.7236 0.447215 -0.52572
+                , Vector.vector 0.276385 0.447215 -0.85064
+                , Vector.vector 0.894425 0.447215 0
+                , Vector.vector 0 1 0
+                ]
+        , vertexIndexes =
+            [ [ 1, 2, 3 ]
+            , [ 2, 1, 6 ]
+            , [ 1, 3, 4 ]
+            , [ 1, 4, 5 ]
+            , [ 1, 5, 6 ]
+            , [ 2, 6, 11 ]
+            , [ 3, 2, 7 ]
+            , [ 4, 3, 8 ]
+            , [ 5, 4, 9 ]
+            , [ 6, 5, 10 ]
+            , [ 2, 11, 7 ]
+            , [ 3, 7, 8 ]
+            , [ 4, 8, 9 ]
+            , [ 5, 9, 10 ]
+            , [ 6, 10, 11 ]
+            , [ 7, 11, 12 ]
+            , [ 8, 7, 12 ]
+            , [ 9, 8, 12 ]
+            , [ 10, 9, 12 ]
+            , [ 11, 10, 12 ]
+            ]
+        }
+
+
+ring : List Face
+ring =
+    toFaces
+        { vertexPositions =
+            Array.fromList
+                [ Vector.vector 0 0 0
+                , Vector.vector 1.25 0 0
+                , Vector.vector 1 0.25 0
+                , Vector.vector 0.75 0 0
+                , Vector.vector 1 -0.25 0
+                , Vector.vector 0 0 -1.25
+                , Vector.vector 0 0.25 -1
+                , Vector.vector 0 0 -0.75
+                , Vector.vector 0 -0.25 -1
+                , Vector.vector -1.25 0 0
+                , Vector.vector -1 0.25 0
+                , Vector.vector -0.75 0 0
+                , Vector.vector -1 -0.25 0
+                , Vector.vector 0 0 1.25
+                , Vector.vector 0 0.25 1
+                , Vector.vector 0 0 0.75
+                , Vector.vector 0 -0.25 1
+                ]
+        , vertexIndexes =
+            [ [ 1, 5, 6, 2 ]
+            , [ 2, 6, 7, 3 ]
+            , [ 3, 7, 8, 4 ]
+            , [ 1, 4, 8, 5 ]
+            , [ 5, 9, 10, 6 ]
+            , [ 6, 10, 11, 7 ]
+            , [ 7, 11, 12, 8 ]
+            , [ 8, 12, 9, 5 ]
+            , [ 9, 13, 14, 10 ]
+            , [ 10, 14, 15, 11 ]
+            , [ 11, 15, 16, 12 ]
+            , [ 12, 16, 13, 9 ]
+            , [ 13, 1, 2, 14 ]
+            , [ 14, 2, 3, 15 ]
+            , [ 15, 3, 4, 16 ]
+            , [ 16, 4, 1, 13 ]
             ]
         }
 
