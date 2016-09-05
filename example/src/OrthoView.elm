@@ -21,16 +21,23 @@ import Mesh
 
 draw : Model -> Html a
 draw model =
-    Html.div [ Attr.style [ ( "height", "500" ) ] ]
-        [ WebGL.toHtml
-            [ Attr.width 500
-            , Attr.height 500
-            , Attr.style [ ( "background-color", "#d0f0ff" ) ]
+    let
+        bkgColor =
+            if model.collision then
+                "#f0ffd0"
+            else
+                "#d0f0ff"
+    in
+        Html.div [ Attr.style [ ( "height", "500" ) ] ]
+            [ WebGL.toHtml
+                [ Attr.width 500
+                , Attr.height 500
+                , Attr.style [ ( "background-color", bkgColor ) ]
+                ]
+                [ drawSolid model Red model.red
+                , drawSolid model Blue model.blue
+                ]
             ]
-            [ drawSolid model Red model.red
-            , drawSolid model Blue model.blue
-            ]
-        ]
 
 
 mesh : Model -> Entity -> Drawable Vertex

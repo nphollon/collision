@@ -11,6 +11,7 @@ import AnimationFrame
 
 -- Collision Library
 
+import Collision
 import Frame exposing (Frame)
 import OBBTree
 import Quaternion exposing (Quaternion)
@@ -64,6 +65,7 @@ init =
                 , selectedNode = ( 0, 0 )
                 , shape = shape
                 }
+            , collision = False
             , collisionsOnly = False
             , showBoxes = False
             , treeLevel = 1
@@ -227,6 +229,7 @@ updateCollisionMap model =
         { model
             | red = remap model.red model.blue
             , blue = remap model.blue model.red
+            , collision = Collision.collide model.red model.blue
         }
 
 

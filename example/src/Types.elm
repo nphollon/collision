@@ -14,6 +14,7 @@ type alias Model =
     { room : Room
     , red : Entity
     , blue : Entity
+    , collision : Bool
     , collisionsOnly : Bool
     , showBoxes : Bool
     , treeLevel : Int
