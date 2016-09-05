@@ -43,8 +43,7 @@ draw model =
                     , ( "height", "10%" )
                     ]
                 ]
-                [ title
-                ]
+                [ title ]
             , Html.div
                 [ Attr.style
                     [ ( "position", "relative" )
@@ -62,19 +61,19 @@ roomAppearance : Model -> Room -> ( Html Action, Html Action )
 roomAppearance model room =
     case room of
         Entrance ->
-            ( title "Collision Test", entranceControls )
+            ( Elements.title "Collision Test", entranceControls )
 
         PositionEditor _ ->
-            ( title "Change Position", positionControls )
+            ( Elements.title "Change Position", positionControls )
 
         OrientationEditor _ ->
-            ( title "Change Orientation", orientationControls )
+            ( Elements.title "Change Orientation", orientationControls )
 
         ShapeEditor ->
-            ( title "Change Shapes", shapeControls model )
+            ( Elements.title "Change Shapes", shapeControls model )
 
         ViewEditor ->
-            ( title "View Settings", viewControls model )
+            ( Elements.title "View Settings", viewControls model )
 
         Transition settings ->
             transition settings model
@@ -121,18 +120,6 @@ offsetDiv fraction content =
                 ]
             ]
             [ content ]
-
-
-title : String -> Html a
-title label =
-    Html.h1
-        [ Attr.style
-            [ ( "font-size", "1.2rem" )
-            , ( "font-weight", "normal" )
-            , ( "text-align", "center" )
-            ]
-        ]
-        [ Html.text label ]
 
 
 entranceControls : Html Action

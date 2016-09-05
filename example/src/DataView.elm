@@ -14,6 +14,8 @@ import InlineHover as Hov
 import Collision exposing (Body, Bounds, Vector, Quaternion)
 import OBBTree
 import Tree exposing (Tree(..))
+import Frame exposing (Frame)
+import Face
 
 
 -- Project Local
@@ -25,13 +27,6 @@ import Elements
 draw : Model -> Html Action
 draw model =
     let
-        titleStyle =
-            Attr.style
-                [ ( "font-size", "1.2rem" )
-                , ( "font-weight", "normal" )
-                , ( "text-align", "center" )
-                ]
-
         redHits =
             OBBTree.collisionMap model.red model.blue
 
@@ -39,11 +34,11 @@ draw model =
             OBBTree.collisionMap model.blue model.red
     in
         Html.div
-            [ Attr.style [ ( "width", "750px" ) ] ]
-            [ Html.h2 [ titleStyle ] [ Html.text "Red" ]
+            [ Attr.style [ ( "width", "100%" ) ] ]
+            [ Elements.title "Red"
             , Elements.divider
             , App.map (SelectNode Red) (displayBody model.red)
-            , Html.h2 [ titleStyle ] [ Html.text "Blue" ]
+            , Elements.title "Blue"
             , Elements.divider
             , App.map (SelectNode Blue) (displayBody model.blue)
             ]
@@ -71,12 +66,12 @@ displayBody entity =
             [ Html.div
                 [ Attr.style
                     [ ( "line-height", "2rem" )
-                    , ( "width", "500px" )
+                    , ( "width", "100%" )
                     ]
                 ]
-                [ vectorDetails "Position" entity.frame.position
-                , quaternionDetails "Orientation" entity.frame.orientation
-                , subtreeDetails selectedSubtree
+                [ bodyFrameDetails entity.frame
+                , Elements.spacer
+                , selectedNodeDetails entity.frame selectedSubtree
                 ]
             , Html.div
                 [ Attr.style
@@ -93,23 +88,69 @@ displayBody entity =
             ]
 
 
-subtreeDetails : Bounds -> Html a
-subtreeDetails tree =
+bodyFrameDetails : Frame -> Html a
+bodyFrameDetails frame =
+    section "Model"
+        [ vectorDetails "Position" frame.position
+        , quaternionDetails "Orientation" frame.orientation
+        ]
+
+
+selectedNodeDetails : Frame -> Bounds -> Html a
+selectedNodeDetails bodyFrame tree =
     case tree of
         Leaf face ->
-            Html.div []
-                [ vectorDetails "Vertex 1" face.p
-                , vectorDetails "Vertex 2" face.q
-                , vectorDetails "Vertex 3" face.r
-                ]
+            let
+                worldFace =
+                    Face.transformInto bodyFrame face
+            in
+                section "Triangle PQR"
+                    [ vectorDetails "Local P" face.p
+                    , vectorDetails "Local Q" face.q
+                    , vectorDetails "Local R" face.r
+                    , vectorDetails "Global P" worldFace.p
+                    , vectorDetails "Global Q" worldFace.q
+                    , vectorDetails "Global R" worldFace.r
+                    ]
 
         Node box _ _ ->
-            Html.div []
-                [ line "Radius"
-                    [ ( "A", box.a ), ( "B", box.b ), ( "C", box.c ) ]
-                , vectorDetails "Offset" box.frame.position
-                , quaternionDetails "Rotation" box.frame.orientation
+            let
+                worldFrame =
+                    Frame.add bodyFrame box.frame
+            in
+                section "Bounding Box"
+                    [ line "Radius"
+                        [ ( "A", box.a ), ( "B", box.b ), ( "C", box.c ) ]
+                    , vectorDetails "Local Position"
+                        box.frame.position
+                    , quaternionDetails "Local Orientation"
+                        box.frame.orientation
+                    , vectorDetails "Global Position"
+                        worldFrame.position
+                    , quaternionDetails "Global Orientation"
+                        worldFrame.orientation
+                    ]
+
+
+section : String -> List (Html a) -> Html a
+section name content =
+    Html.div
+        [ Attr.style
+            [ ( "display", "flex" )
+            , ( "width", "100%" )
+            , ( "justify-content", "center" )
+            ]
+        ]
+        [ Html.div
+            [ Attr.style
+                [ ( "margin-right", "3rem" )
                 ]
+            ]
+            [ Elements.title name ]
+        , Html.div
+            [ Attr.style [] ]
+            content
+        ]
 
 
 vectorDetails : String -> Vector -> Html a
@@ -138,17 +179,14 @@ line label lineItems =
             List.map (uncurry field) lineItems
     in
         Html.div
-            [ Attr.style
-                [ ( "display", "flex" )
-                , ( "justify-content", "space-around" )
-                ]
-            ]
+            [ Attr.style [ ( "display", "flex" ) ] ]
             (Html.em [] [ Html.text label ] :: fields)
 
 
 field : String -> Float -> Html a
 field label value =
-    Html.div []
+    Html.div
+        [ Attr.style [ ( "margin-left", "2rem" ) ] ]
         [ Html.text label
         , Html.text " = "
         , Html.text (float value)

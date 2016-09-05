@@ -4,6 +4,18 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 
 
+title : String -> Html a
+title label =
+    Html.h1
+        [ Attr.style
+            [ ( "font-size", "1.2rem" )
+            , ( "font-weight", "normal" )
+            , ( "text-align", "center" )
+            ]
+        ]
+        [ Html.text label ]
+
+
 divider : Html a
 divider =
     Html.hr [ Attr.style [ ( "width", "80%" ) ] ] []
