@@ -40,7 +40,8 @@ mesh settings entity =
             if settings.showBoxes then
                 settings.treeLevel
             else
-                5
+                -- arbitrary big number
+                100
     in
         if settings.collisionsOnly then
             Mesh.whitelistedBoxes entity.hits depth entity.bounds

@@ -1,4 +1,4 @@
-module Tree exposing (Tree(..), CrossFunctions, satisfies, leaves, internals, encode, decode, subtreeAt, toTheLeft, toTheRight, collisionMap)
+module Tree exposing (Tree(..), CrossFunctions, satisfies, leaves, internals, depth, encode, decode, subtreeAt, toTheLeft, toTheRight, collisionMap)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
@@ -8,6 +8,16 @@ import Set exposing (Set)
 type Tree a b
     = Leaf b
     | Node a (Tree a b) (Tree a b)
+
+
+depth : Tree a b -> Int
+depth tree =
+    case tree of
+        Leaf _ ->
+            1
+
+        Node _ left right ->
+            1 + max (depth left) (depth right)
 
 
 type alias CrossFunctions a b c d =
@@ -55,9 +65,11 @@ fold xf a b coords hits =
             else
                 hits
 
-        ( Leaf aVal, Node bVal _ _ ) ->
+        ( Leaf aVal, Node bVal bLeft bRight ) ->
             if xf.leafNode aVal bVal then
-                Set.insert coords hits
+                hits
+                    |> fold xf a bLeft coords
+                    |> fold xf a bRight coords
             else
                 hits
 

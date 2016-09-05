@@ -13,6 +13,7 @@ import Ease
 -- Collision Library
 
 import Vector exposing (Vector)
+import Tree
 
 
 -- Project Local
@@ -236,10 +237,14 @@ capitalize text =
 
 
 viewControls : Model -> Html Action
-viewControls settings =
+viewControls model =
     let
+        maxDepth =
+            max (Tree.depth model.red.bounds)
+                (Tree.depth model.blue.bounds)
+
         treeLevels =
-            List.map (\i -> ( toString i, toString i )) [1..5]
+            List.map (\i -> ( toString i, toString i )) [1..maxDepth]
 
         setTreeLevel value =
             String.toInt value
@@ -249,19 +254,19 @@ viewControls settings =
         submenu
             [ checkbox
                 CollisionsOnly
-                settings.collisionsOnly
+                model.collisionsOnly
                 "Show collisions only"
             , Elements.spacer
             , checkbox
                 ShowBoxes
-                settings.showBoxes
+                model.showBoxes
                 "Show bounding boxes"
             , Html.div []
                 [ Html.text "Tree level"
                 , select
                     setTreeLevel
-                    settings.showBoxes
-                    (toString settings.treeLevel)
+                    model.showBoxes
+                    (toString model.treeLevel)
                     treeLevels
                 ]
             ]

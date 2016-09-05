@@ -181,21 +181,22 @@ icosahedron : List Face
 icosahedron =
     toFaces
         { vertexPositions =
-            Array.fromList
-                [ Vector.vector 0 0 0
-                , Vector.vector 0 -1 0
-                , Vector.vector 0.7236 -0.447215 0.52572
-                , Vector.vector -0.276385 -0.447215 0.85064
-                , Vector.vector -0.894425 -0.447215 0
-                , Vector.vector -0.276385 -0.447215 -0.85064
-                , Vector.vector 0.7236 -0.447215 -0.52572
-                , Vector.vector 0.276385 0.447215 0.85064
-                , Vector.vector -0.7236 0.447215 0.52572
-                , Vector.vector -0.7236 0.447215 -0.52572
-                , Vector.vector 0.276385 0.447215 -0.85064
-                , Vector.vector 0.894425 0.447215 0
-                , Vector.vector 0 1 0
-                ]
+            [ Vector.vector 0 0 0
+            , Vector.vector 0 -1 0
+            , Vector.vector 0.7236 -0.447215 0.52572
+            , Vector.vector -0.276385 -0.447215 0.85064
+            , Vector.vector -0.894425 -0.447215 0
+            , Vector.vector -0.276385 -0.447215 -0.85064
+            , Vector.vector 0.7236 -0.447215 -0.52572
+            , Vector.vector 0.276385 0.447215 0.85064
+            , Vector.vector -0.7236 0.447215 0.52572
+            , Vector.vector -0.7236 0.447215 -0.52572
+            , Vector.vector 0.276385 0.447215 -0.85064
+            , Vector.vector 0.894425 0.447215 0
+            , Vector.vector 0 1 0
+            ]
+                |> List.map (Vector.scale 2)
+                |> Array.fromList
         , vertexIndexes =
             [ [ 1, 2, 3 ]
             , [ 2, 1, 6 ]
@@ -225,25 +226,26 @@ ring : List Face
 ring =
     toFaces
         { vertexPositions =
-            Array.fromList
-                [ Vector.vector 0 0 0
-                , Vector.vector 1.25 0 0
-                , Vector.vector 1 0.25 0
-                , Vector.vector 0.75 0 0
-                , Vector.vector 1 -0.25 0
-                , Vector.vector 0 0 -1.25
-                , Vector.vector 0 0.25 -1
-                , Vector.vector 0 0 -0.75
-                , Vector.vector 0 -0.25 -1
-                , Vector.vector -1.25 0 0
-                , Vector.vector -1 0.25 0
-                , Vector.vector -0.75 0 0
-                , Vector.vector -1 -0.25 0
-                , Vector.vector 0 0 1.25
-                , Vector.vector 0 0.25 1
-                , Vector.vector 0 0 0.75
-                , Vector.vector 0 -0.25 1
-                ]
+            [ Vector.vector 0 0 0
+            , Vector.vector 1.25 0 0
+            , Vector.vector 1 0.25 0
+            , Vector.vector 0.75 0 0
+            , Vector.vector 1 -0.25 0
+            , Vector.vector 0 0 -1.25
+            , Vector.vector 0 0.25 -1
+            , Vector.vector 0 0 -0.75
+            , Vector.vector 0 -0.25 -1
+            , Vector.vector -1.25 0 0
+            , Vector.vector -1 0.25 0
+            , Vector.vector -0.75 0 0
+            , Vector.vector -1 -0.25 0
+            , Vector.vector 0 0 1.25
+            , Vector.vector 0 0.25 1
+            , Vector.vector 0 0 0.75
+            , Vector.vector 0 -0.25 1
+            ]
+                |> List.map (Vector.scale 2)
+                |> Array.fromList
         , vertexIndexes =
             [ [ 1, 5, 6, 2 ]
             , [ 2, 6, 7, 3 ]

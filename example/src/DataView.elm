@@ -64,8 +64,8 @@ displayBody entity =
         Html.div
             [ Attr.style
                 [ ( "display", "flex" )
-                , ( "flex-wrap", "wrap" )
-                , ( "justify-content", "center" )
+                , ( "flex-direction", "column" )
+                , ( "align-items", "center" )
                 ]
             ]
             [ Html.div

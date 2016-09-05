@@ -12,6 +12,7 @@ testSuite =
         [ satisfiesSuite
         , leavesSuite
         , internalSuite
+        , depthSuite
         , jsonSuite
         ]
 
@@ -129,3 +130,17 @@ jsonSuite =
             , test "node encodes and decodes again without losing data" <|
                 assertLosslessJson (Node "hello" (Leaf 2) (Leaf 3))
             ]
+
+
+depthSuite : Test
+depthSuite =
+    suite "measuring tree depth"
+        [ test "depth of leaf is 1" <|
+            assertEqual 1 (Tree.depth (Leaf 1))
+        , test "depth of 3-node tree is 2" <|
+            assertEqual 2
+                (Tree.depth (Node 1 (Leaf 2) (Leaf 3)))
+        , test "depth of 5-node tree is 3" <|
+            assertEqual 3
+                (Tree.depth (Node 1 (Leaf 2) (Node 3 (Leaf 4) (Leaf 5))))
+        ]
