@@ -102,7 +102,7 @@ selectedNodeDetails bodyFrame tree =
         Leaf face ->
             let
                 worldFace =
-                    Face.transformInto bodyFrame face
+                    Face.transformOutOf bodyFrame face
             in
                 section "Triangle PQR"
                     [ vectorDetails "Local P" face.p
@@ -116,7 +116,7 @@ selectedNodeDetails bodyFrame tree =
         Node box _ _ ->
             let
                 worldFrame =
-                    Frame.add bodyFrame box.frame
+                    Frame.compose bodyFrame box.frame
             in
                 section "Bounding Box"
                     [ line "Radius"
