@@ -52,16 +52,16 @@ crossFunctions : Body a -> Body b -> CrossFunctions BoundingBox Face BoundingBox
 crossFunctions bodyA bodyB =
     let
         transformAFace =
-            Face.transformInto bodyA.frame
+            Face.transformOutOf bodyA.frame
 
         transformBFace =
-            Face.transformInto bodyB.frame
+            Face.transformOutOf bodyB.frame
 
         transformABox box =
-            { box | frame = Frame.add bodyA.frame box.frame }
+            { box | frame = Frame.compose bodyA.frame box.frame }
 
         transformBBox box =
-            { box | frame = Frame.add bodyB.frame box.frame }
+            { box | frame = Frame.compose bodyB.frame box.frame }
 
         boxCollide boxA boxB =
             BoundingBox.collide

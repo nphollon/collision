@@ -1,4 +1,4 @@
-module Face exposing (Face, FaceFacts, face, getFacts, vertexList, vertexTuple, cross, collide, encode, decode, transformInto)
+module Face exposing (Face, FaceFacts, face, getFacts, vertexList, vertexTuple, cross, collide, encode, decode, transformInto, transformOutOf)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
@@ -33,6 +33,14 @@ transformInto frame face =
     { p = Frame.transformInto frame face.p
     , q = Frame.transformInto frame face.q
     , r = Frame.transformInto frame face.r
+    }
+
+
+transformOutOf : Frame -> Face -> Face
+transformOutOf frame face =
+    { p = Frame.transformOutOf frame face.p
+    , q = Frame.transformOutOf frame face.q
+    , r = Frame.transformOutOf frame face.r
     }
 
 

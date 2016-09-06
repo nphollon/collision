@@ -1,4 +1,4 @@
-module Frame exposing (Frame, identity, transformInto, transformOutOf, add, toMat4, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate)
+module Frame exposing (Frame, identity, transformInto, transformOutOf, toMat4, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate)
 
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Vector exposing (Vector)
@@ -35,13 +35,6 @@ transformOutOf : Frame -> Vector -> Vector
 transformOutOf frame point =
     Quaternion.rotateVector frame.orientation point
         |> Vector.add frame.position
-
-
-add : Frame -> Frame -> Frame
-add a b =
-    { position = Vector.add b.position a.position
-    , orientation = Quaternion.compose b.orientation a.orientation
-    }
 
 
 compose : Frame -> Frame -> Frame

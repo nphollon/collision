@@ -12,13 +12,17 @@ import OBBTree exposing (Body)
 testSuite : Test
 testSuite =
     suite "Collision detection"
-        [ collideSuite
+        [ centeredCollisionSuite
+        , offCenterCollisionSuite
         , projectAndSplitSuite
         ]
 
 
-collideSuite : Test
-collideSuite =
+{-| collisions where bounding box is centered on the
+origin of the body's reference frame
+-}
+centeredCollisionSuite : Test
+centeredCollisionSuite =
     let
         box =
             Node
@@ -70,6 +74,59 @@ collideSuite =
                     (defaultBody
                         |> setPosition (Vector.vector 0 0 2)
                         |> setOrientation (Quaternion.rotateY (degrees 20.7))
+                    )
+            ]
+
+
+{-| Bounding box is offset from the body's origin
+-}
+offCenterCollisionSuite : Test
+offCenterCollisionSuite =
+    let
+        triangle =
+            { p = Vector.vector -1 -1 -10
+            , q = Vector.vector 1 1 -10
+            , r = Vector.vector 0 0 -12
+            }
+
+        box =
+            { a = 3
+            , b = 0.1
+            , c = 0.1
+            , frame =
+                { position = Vector.vector 0 0 -10
+                , orientation = Quaternion.rotateY (degrees 45)
+                }
+            }
+
+        aFrame =
+            { position = Vector.vector 0 10 0
+            , orientation = Quaternion.rotateX (degrees -90)
+            }
+
+        bFrame =
+            { position = Vector.vector 10 0 0
+            , orientation = Quaternion.rotateY (degrees 90)
+            }
+
+        leafTree =
+            Leaf triangle
+
+        boxTree =
+            Node box (Leaf triangle) (Leaf triangle)
+    in
+        suite "Off-center body collisions"
+            [ test "two faces rotated to the same location" <|
+                assertEqual True
+                    (OBBTree.collide
+                        { bounds = Leaf triangle, frame = aFrame }
+                        { bounds = Leaf triangle, frame = bFrame }
+                    )
+            , test "two boxes rotated to the same location" <|
+                assertEqual True
+                    (OBBTree.collide
+                        { bounds = boxTree, frame = aFrame }
+                        { bounds = boxTree, frame = bFrame }
                     )
             ]
 
