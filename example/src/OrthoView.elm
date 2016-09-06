@@ -2,8 +2,9 @@ module OrthoView exposing (draw)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
-import WebGL exposing (Drawable, Shader, Renderable)
+import WebGL exposing (Drawable(..), Shader, Renderable)
 import Math.Vector3 as Vec3 exposing (Vec3)
+import Math.Vector4 as Vec4 exposing (Vec4)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 
 
@@ -36,6 +37,7 @@ draw model =
                 ]
                 [ drawSolid model Red model.red
                 , drawSolid model Blue model.blue
+                , drawAxes
                 ]
             ]
 
@@ -58,14 +60,6 @@ mesh settings entity =
 
 drawSolid : Model -> Solid -> Entity -> Renderable
 drawSolid model solid entity =
-    WebGL.render vertexShader
-        fragmentShader
-        (mesh model entity)
-        (uniform solid entity.frame)
-
-
-uniform : Solid -> Frame -> Uniform
-uniform solid frame =
     let
         color =
             case solid of
@@ -74,7 +68,44 @@ uniform solid frame =
 
                 Blue ->
                     Vec3.vec3 0 0 1
+    in
+        WebGL.render vertexShader
+            fragmentShader
+            (mesh model entity)
+            (uniform color entity.frame)
 
+
+drawAxes : Renderable
+drawAxes =
+    let
+        vert x y z =
+            { position = Vec3.vec3 x y z }
+
+        mesh =
+            Lines
+                [ -- X
+                  ( vert 100 0 0, vert -100 0 0 )
+                , ( vert 10 -0.2 0.2, vert 10 -0.8 0.8 )
+                , ( vert 10 -0.2 0.8, vert 10 -0.8 0.2 )
+                  -- Y
+                , ( vert 0 100 0, vert 0 -100 0 )
+                , ( vert 0.1 10 -0.5, vert 0.5 10 -0.5 )
+                , ( vert 0.5 10 -0.9, vert 0.5 10 -0.5 )
+                , ( vert 0.9 10 -0.1, vert 0.5 10 -0.5 )
+                  -- Z
+                , ( vert 0 0 100, vert 0 0 -100 )
+                , ( vert -0.8 0.8 10, vert -0.2 0.8 10 )
+                , ( vert -0.2 0.8 10, vert -0.8 0.2 10 )
+                , ( vert -0.8 0.2 10, vert -0.2 0.2 10 )
+                ]
+    in
+        uniform (Vec3.vec3 0.5 0.5 0.5) Frame.identity
+            |> WebGL.render axisVertexShader axisFragmentShader mesh
+
+
+uniform : Vec3 -> Frame -> Uniform
+uniform color frame =
+    let
         cameraPosition =
             Vector.vector 5 5 5
 
@@ -167,4 +198,42 @@ fragmentShader =
 
             gl_FragColor = vec4(nonspecularColor + specularColor, 1);
         }
+    |]
+
+
+axisVertexShader : Shader { position : Vec3 } Uniform { color : Vec4 }
+axisVertexShader =
+    [glsl|
+         precision mediump float;
+
+         attribute vec3 position;
+
+         uniform vec3 cameraPosition;
+         uniform mat4 cameraOrientation;
+         uniform mat4 perspective;
+         uniform mat4 placement;
+         uniform vec3 diffuseColor;
+
+         varying vec4 color;
+
+         void main() {
+             vec4 worldFrame = placement * vec4(position, 1);
+             vec4 cameraOffset = worldFrame - vec4(cameraPosition, 0);
+             gl_Position = perspective * cameraOrientation * cameraOffset;
+
+             color = vec4(diffuseColor, 1);
+         }
+    |]
+
+
+axisFragmentShader : Shader {} Uniform { color : Vec4 }
+axisFragmentShader =
+    [glsl|
+         precision mediump float;
+
+         varying vec4 color;
+
+         void main() {
+             gl_FragColor = color;
+         }
     |]
