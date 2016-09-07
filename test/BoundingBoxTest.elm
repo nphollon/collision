@@ -5,9 +5,9 @@ import Assertion exposing (..)
 import Json.Decode as Decode
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
-import Face exposing (Face)
 import Frame exposing (Frame)
-import BoundingBox as BoundingBox exposing (BoundingBox)
+import Collision.Face as Face exposing (Face)
+import Collision.BoundingBox as BoundingBox exposing (BoundingBox)
 
 
 testSuite : Test

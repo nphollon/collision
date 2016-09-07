@@ -7,15 +7,14 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.App as App
 import AnimationFrame
+import Frame exposing (Frame)
+import Quaternion exposing (Quaternion)
+import Vector exposing (Vector)
 
 
 -- Collision Library
 
 import Collision
-import Frame exposing (Frame)
-import OBBTree
-import Quaternion exposing (Quaternion)
-import Vector exposing (Vector)
 
 
 -- Project Local
@@ -222,7 +221,7 @@ updateCollisionMap model =
     let
         remap =
             (\object other ->
-                { object | hits = OBBTree.collisionMap object other }
+                { object | hits = Collision.collisionMap object other }
             )
     in
         { model

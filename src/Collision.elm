@@ -1,4 +1,4 @@
-module Collision exposing (Body, Bounds, Face, Vector, Quaternion, face, vector, quaternion, axisAngleRotation, collide, create, empty, encode, decode)
+module Collision exposing (Body, Bounds, Face, face, collide, create, empty, encode, decode, BoundingBox, collisionMap)
 
 {-| Detect collisions between rigid three-dimensional objects. The process goes like this:
 
@@ -12,67 +12,36 @@ module Collision exposing (Body, Bounds, Face, Vector, Quaternion, face, vector,
 
 This module will not work for 2D objects.
 
-# Geometry
-@docs Vector, vector, Quaternion, quaternion, axisAngleRotation, Face, face
-
-# Creating Bounds
-@docs Bounds, create, empty
-
-# Checking Collisions
-@docs Body, collide
+# Collision Detection
+@docs Face, face, Bounds, create, empty, Body, collide
 
 # Working with JSON
 @docs encode, decode
+
+# Debugging
+
+Chances are you won't need to use the functions below. They are used by the Collision Visualizer. You can use them along with the `Collision.Tree` module to examine the collision trees.
+
+@docs BoundingBox, collisionMap
 -}
 
+import Set exposing (Set)
 import Json.Encode exposing (Value)
 import Json.Decode exposing (Decoder)
-import OBBTree
-import Face
-import Vector
-import Quaternion
+import Vector exposing (Vector)
 import Frame exposing (Frame)
-
-
-{-| Stores a three-dimensional position.
--}
-type alias Vector =
-    Vector.Vector
-
-
-{-| Create a vector from x, y, and z coordinates.
--}
-vector : Float -> Float -> Float -> Vector
-vector =
-    Vector.vector
-
-
-{-| Stores a three-dimensional rotation.
--}
-type alias Quaternion =
-    Quaternion.Quaternion
-
-
-{-| Create a quaternion from w, x, y, and z coordinates.
--}
-quaternion : Float -> Float -> Float -> Float -> Quaternion
-quaternion =
-    Quaternion.quaternion
-
-
-{-| Given an axis to rotate around and an angle of rotation, create a quaternion.
-
-Returns Nothing if passed the zero vector.
--}
-axisAngleRotation : Vector -> Float -> Maybe Quaternion
-axisAngleRotation =
-    Quaternion.fromAxisAngle
+import Collision.OBBTree as OBBTree
+import Collision.Face as Face
+import Collision.Tree exposing (Tree)
 
 
 {-| A triangle. The surface of your colliding objects is described by a collection of triangular faces.
 -}
 type alias Face =
-    Face.Face
+    { p : Vector
+    , q : Vector
+    , r : Vector
+    }
 
 
 {-| Create a triangular face, given the positions of its three vertexes. The vertexes can be given in any order.
@@ -85,7 +54,7 @@ face =
 {-| The boundary data for an object, stored as an OBBTree.
 -}
 type alias Bounds =
-    OBBTree.OBBTree
+    Tree BoundingBox Face
 
 
 {-| An object that is positioned and oriented in three-dimensional space. The bounds of the object are given in the body's reference frame. Before testing for a collision, we use the position and orientation to move the bounds into the world's reference frame.
@@ -134,3 +103,28 @@ encode =
 decode : Decoder Bounds
 decode =
     OBBTree.decode
+
+
+{-| An oriented bounding box. A, B, and C are the radiuses, or half-widths, of the box along its X, Y, and Z axes, respectively. The frame describes the placement of the bounding box relative to the body's reference frame.
+-}
+type alias BoundingBox =
+    { a : Float
+    , b : Float
+    , c : Float
+    , frame : Frame
+    }
+
+
+{-| Given two bodies, A and B, return the set of tree coordinates where the bounding tree of A collides with the bounding tree of B. This gives you an inkling of how the collision algorithm works. In general, boxes that collide with boxes or leaves on the same level are hits, and leaves that collide with leafs are hits.
+
+If A has a bounding box at (1, 2), and it collides with a bounding box in B at (1, 4), then `collisionMap a b` will include (1, 2), and `collisionMap b a` will include (1, 4).
+
+If A has a leaf at (3, 0), and it collides with a leaf in B at (4, 2), then `collisionMap a b` will include (3, 0), and `collisionMap b a` will include (4, 2).
+
+Check out the Collision Visualizer to see this function in action.
+
+For more information about how the tree coordinates work, see `Collision.Tree`.
+-}
+collisionMap : Body b -> Body b' -> Set ( Int, Int )
+collisionMap =
+    OBBTree.collisionMap

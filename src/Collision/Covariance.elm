@@ -1,8 +1,8 @@
-module Covariance exposing (Covariance, Basis, eigenbasis, init, fromMesh, basisToQuaternion)
+module Collision.Covariance exposing (Covariance, Basis, eigenbasis, init, fromMesh, basisToQuaternion)
 
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
-import Face exposing (Face)
+import Collision.Face as Face exposing (Face)
 
 
 type Covariance

@@ -1,21 +1,92 @@
 module OBBTreeTest exposing (testSuite)
 
 import ElmTest exposing (..)
+import Json.Decode as Decode
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
 import Frame
-import Tree exposing (Tree(..))
-import Face as Face
-import OBBTree exposing (Body)
+import Collision.Tree as Tree exposing (Tree(..))
+import Collision.Face as Face
+import Collision.OBBTree as OBBTree exposing (Body)
 
 
 testSuite : Test
 testSuite =
     suite "Collision detection"
-        [ centeredCollisionSuite
+        [ collisionRecursionSuite
+        , centeredCollisionSuite
         , offCenterCollisionSuite
         , projectAndSplitSuite
+        , jsonSuite
         ]
+
+
+collisionRecursionSuite : Test
+collisionRecursionSuite =
+    let
+        xf =
+            { nodeNode = (==)
+            , leafLeaf = (==)
+            , nodeLeaf = flip List.member
+            , leafNode = List.member
+            }
+
+        assertHit a b =
+            assertEqual True (OBBTree.collideRecurse xf a b)
+
+        assertMiss a b =
+            assertEqual False (OBBTree.collideRecurse xf a b)
+    in
+        suite "recursive condition checking"
+            [ test "non-colliding leafs do not collide" <|
+                assertMiss (Leaf 1)
+                    (Leaf 2)
+            , test "colliding leafs collide" <|
+                assertHit (Leaf 1)
+                    (Leaf 1)
+            , test "false if leaf collides with node but not children" <|
+                assertMiss (Leaf 1)
+                    (Node [ 1 ] (Leaf 2) (Leaf 3))
+            , test "true if leaf collides with node and the first child" <|
+                assertHit (Leaf 1)
+                    (Node [ 1 ] (Leaf 1) (Leaf 3))
+            , test "true if leaf collides with node and the second child" <|
+                assertHit (Leaf 1)
+                    (Node [ 1 ] (Leaf 3) (Leaf 1))
+            , test "false if leaf collides with children but not node" <|
+                assertMiss (Leaf 1)
+                    (Node [ 2 ] (Leaf 1) (Leaf 2))
+            , test "false if node but not children collide with leaf" <|
+                assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Leaf 1)
+            , test "true if node and first child collide with leaf" <|
+                assertHit (Node [ 1 ] (Leaf 1) (Leaf 3))
+                    (Leaf 1)
+            , test "true if node and second child collide with leaf" <|
+                assertHit (Node [ 1 ] (Leaf 3) (Leaf 1))
+                    (Leaf 1)
+            , test "false if children but not node collide with leaf" <|
+                assertMiss (Node [ 2 ] (Leaf 1) (Leaf 3))
+                    (Leaf 1)
+            , test "false if nodes but no children collide" <|
+                assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 4) (Leaf 5))
+            , test "false if children but not nodes collide" <|
+                assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 4 ] (Leaf 2) (Leaf 3))
+            , test "true if first children collide" <|
+                assertHit (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 2) (Leaf 4))
+            , test "true if first child collides with second child" <|
+                assertHit (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 4) (Leaf 2))
+            , test "true if second child collides with first child" <|
+                assertHit (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 3) (Leaf 4))
+            , test "true if second children collide" <|
+                assertHit (Node [ 1 ] (Leaf 2) (Leaf 3))
+                    (Node [ 1 ] (Leaf 4) (Leaf 3))
+            ]
 
 
 {-| collisions where bounding box is centered on the
@@ -265,6 +336,43 @@ projectAndSplitSuite =
                         , facts 1.0e-10 two
                         , facts -1.0e-10 three
                         ]
+                    )
+            ]
+
+
+jsonSuite : Test
+jsonSuite =
+    let
+        assertLosslessJson tree =
+            assertEqual
+                (Ok tree)
+                (Decode.decodeValue OBBTree.decode (OBBTree.encode tree))
+    in
+        suite "encoding and decoding json"
+            [ test "leaf encodes and decodes again without losing data" <|
+                assertLosslessJson
+                    (Leaf
+                        { p = Vector.vector 1 2 3
+                        , q = Vector.vector 4 5 6
+                        , r = Vector.vector 7 8 9
+                        }
+                    )
+            , test "node encodes and decodes again without losing data" <|
+                assertLosslessJson
+                    (Node
+                        { a = 1, b = 2, c = 3, frame = Frame.identity }
+                        (Leaf
+                            { p = Vector.vector 4 5 6
+                            , q = Vector.vector 7 8 9
+                            , r = Vector.vector 10 11 12
+                            }
+                        )
+                        (Leaf
+                            { p = Vector.vector 13 14 15
+                            , q = Vector.vector 16 17 18
+                            , r = Vector.vector 19 20 21
+                            }
+                        )
                     )
             ]
 

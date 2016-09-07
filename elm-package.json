@@ -7,10 +7,10 @@
         "src"
     ],
     "exposed-modules": [
-        "Collision"
+        "Collision",
+        "Collision.Tree"
     ],
     "dependencies": {
-        "elm-community/elm-linear-algebra": "2.0.3 <= v < 3.0.0",
         "elm-lang/core": "4.0.1 <= v < 5.0.0",
         "nphollon/geo3d": "1.0.1 <= v < 2.0.0"
     },

@@ -1,13 +1,13 @@
-module BoundingBox exposing (BoundingBox, collide, collideWithFace, create, encode, decode)
+module Collision.BoundingBox exposing (BoundingBox, collide, collideWithFace, create, encode, decode)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
 import Frame exposing (Frame)
-import Hull
-import Face exposing (Face)
-import Covariance exposing (Covariance)
+import Collision.Hull as Hull
+import Collision.Face as Face exposing (Face)
+import Collision.Covariance as Covariance exposing (Covariance)
 
 
 type alias BoundingBox =

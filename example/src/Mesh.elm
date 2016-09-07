@@ -6,16 +6,14 @@ import Set exposing (Set)
 import Maybe.Extra as MaybeX
 import Math.Vector3 as Vec3 exposing (Vec3)
 import WebGL exposing (Drawable(..))
+import Vector exposing (Vector)
+import Frame
 
 
 -- Collision Library
 
-import Vector exposing (Vector)
-import Face exposing (Face)
-import Collision exposing (Bounds)
-import BoundingBox exposing (BoundingBox)
-import Tree
-import Frame
+import Collision exposing (Bounds, Face, BoundingBox)
+import Collision.Tree as Tree
 
 
 -- Project local
@@ -276,7 +274,7 @@ toFaces { vertexPositions, vertexIndexes } =
         decomposePolygon points =
             case points of
                 i :: (j :: (k :: list)) ->
-                    List.map2 (Face.face i)
+                    List.map2 (Collision.face i)
                         (j :: k :: list)
                         (k :: list)
 
@@ -289,16 +287,15 @@ toFaces { vertexPositions, vertexIndexes } =
 
 toVertexTriangle : Face -> Maybe ( Vertex, Vertex, Vertex )
 toVertexTriangle face =
-    case Vector.normalize (Face.cross face) of
-        Nothing ->
-            Nothing
-
-        Just normal ->
-            Just
+    Vector.cross (Vector.sub face.q face.p) (Vector.sub face.r face.p)
+        |> Vector.normalize
+        |> Maybe.map
+            (\normal ->
                 ( toVertex face.p normal
                 , toVertex face.q normal
                 , toVertex face.r normal
                 )
+            )
 
 
 toVertex : Vector -> Vector -> Vertex

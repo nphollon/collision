@@ -3,15 +3,15 @@ module HullTest exposing (testSuite)
 import String
 import ElmTest exposing (..)
 import Vector exposing (Vector)
-import Face exposing (Face)
-import Hull
+import Collision.Face as Face exposing (Face)
+import Collision.Hull as Hull
 
 
 testSuite : Test
 testSuite =
     suite "Degenerate hulls"
-        [ test "If all points are equal, return empty hull"
-            <| assertEqual []
+        [ test "If all points are equal, return empty hull" <|
+            assertEqual []
                 (Hull.hull
                     [ Vector 1 2 3
                     , Vector 1 2 3

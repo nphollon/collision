@@ -2,9 +2,9 @@ module CovarianceTest exposing (testSuite)
 
 import ElmTest exposing (..)
 import Assertion exposing (..)
-import Covariance exposing (Basis)
 import Vector exposing (Vector)
 import Quaternion
+import Collision.Covariance as Covariance exposing (Basis)
 
 
 testSuite : Test

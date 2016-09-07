@@ -8,12 +8,12 @@ import Html.Attributes as Attr
 import Html.Events as Evt
 import InlineHover as Hov
 import Ease
+import Vector exposing (Vector)
 
 
 -- Collision Library
 
-import Vector exposing (Vector)
-import Tree
+import Collision.Tree as Tree
 
 
 -- Project Local

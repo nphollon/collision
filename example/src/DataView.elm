@@ -7,15 +7,15 @@ import Html.Attributes as Attr
 import Html.App as App
 import Html.Events as Evt
 import InlineHover as Hov
+import Frame exposing (Frame)
+import Vector exposing (Vector)
+import Quaternion exposing (Quaternion)
 
 
 -- Collision Library
 
-import Collision exposing (Body, Bounds, Vector, Quaternion)
-import OBBTree
-import Tree exposing (Tree(..))
-import Frame exposing (Frame)
-import Face
+import Collision exposing (Body, Bounds)
+import Collision.Tree as Tree exposing (Tree(..))
 
 
 -- Project Local
@@ -28,10 +28,10 @@ draw : Model -> Html Action
 draw model =
     let
         redHits =
-            OBBTree.collisionMap model.red model.blue
+            Collision.collisionMap model.red model.blue
 
         blueHits =
-            OBBTree.collisionMap model.blue model.red
+            Collision.collisionMap model.blue model.red
     in
         Html.div
             [ Attr.style [ ( "width", "100%" ) ] ]
@@ -102,7 +102,10 @@ selectedNodeDetails bodyFrame tree =
         Leaf face ->
             let
                 worldFace =
-                    Face.transformOutOf bodyFrame face
+                    { p = Frame.transformOutOf bodyFrame face.p
+                    , q = Frame.transformOutOf bodyFrame face.q
+                    , r = Frame.transformOutOf bodyFrame face.r
+                    }
             in
                 section "Triangle PQR"
                     [ vectorDetails "Local P" face.p

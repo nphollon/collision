@@ -1,9 +1,9 @@
-module Hull exposing (hull, unique)
+module Collision.Hull exposing (hull, unique)
 
 import Dict exposing (Dict)
 import Set
 import Vector exposing (Vector)
-import Face exposing (Face)
+import Collision.Face as Face exposing (Face)
 
 
 type alias Pair a =

@@ -2,7 +2,7 @@ module FaceTest exposing (..)
 
 import ElmTest exposing (..)
 import Json.Decode as Decode
-import Face exposing (Face)
+import Collision.Face as Face exposing (Face)
 import Vector
 
 
@@ -83,8 +83,8 @@ testBPermutations : String -> Bool -> Face -> Face -> Test
 testBPermutations name shouldIntersect a b =
     let
         subTest subName bPermuted =
-            test subName
-                <| assertEqual shouldIntersect
+            test subName <|
+                assertEqual shouldIntersect
                     (Face.collide a bPermuted)
     in
         suite name
@@ -106,6 +106,6 @@ jsonSuite =
             , r = Vector.vector -1 0 1
             }
     in
-        test "Json encoding & decoding"
-            <| assertEqual (Ok face)
+        test "Json encoding & decoding" <|
+            assertEqual (Ok face)
                 (Decode.decodeValue Face.decode (Face.encode face))

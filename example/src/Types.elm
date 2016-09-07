@@ -2,11 +2,11 @@ module Types exposing (..)
 
 import Set exposing (Set)
 import Math.Vector3 exposing (Vec3)
+import Vector exposing (Vector)
 
 
 -- Collision Library
 
-import Vector exposing (Vector)
 import Collision exposing (Bounds, Body)
 
 

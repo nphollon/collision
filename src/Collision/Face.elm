@@ -1,4 +1,4 @@
-module Face exposing (Face, FaceFacts, face, getFacts, vertexList, vertexTuple, cross, collide, encode, decode, transformInto, transformOutOf)
+module Collision.Face exposing (Face, FaceFacts, face, getFacts, vertexList, vertexTuple, cross, collide, encode, decode, transformInto, transformOutOf)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))

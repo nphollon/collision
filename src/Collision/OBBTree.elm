@@ -1,14 +1,14 @@
-module OBBTree exposing (OBBTree, Body, collide, create, empty, projectAndSplit, encode, decode, collisionMap)
+module Collision.OBBTree exposing (OBBTree, Body, collide, create, empty, projectAndSplit, encode, decode, collisionMap, collideRecurse)
 
 import Set exposing (Set)
 import Json.Encode as Encode exposing (Value)
-import Json.Decode as Decode exposing (Decoder)
-import Tree exposing (Tree(..), CrossFunctions)
-import BoundingBox exposing (BoundingBox)
-import Face exposing (Face, FaceFacts)
+import Json.Decode as Decode exposing (Decoder, (:=))
 import Frame exposing (Frame)
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
+import Collision.Tree as Tree exposing (Tree(..))
+import Collision.BoundingBox as BoundingBox exposing (BoundingBox)
+import Collision.Face as Face exposing (Face, FaceFacts)
 
 
 type alias OBBTree =
@@ -22,19 +22,9 @@ type alias Body a =
     }
 
 
-encode : OBBTree -> Value
-encode =
-    Tree.encode BoundingBox.encode Face.encode
-
-
-decode : Decoder OBBTree
-decode =
-    Tree.decode BoundingBox.decode Face.decode
-
-
 collide : Body a -> Body b -> Bool
 collide bodyA bodyB =
-    Tree.satisfies
+    collideRecurse
         (crossFunctions bodyA bodyB)
         bodyA.bounds
         bodyB.bounds
@@ -42,10 +32,12 @@ collide bodyA bodyB =
 
 collisionMap : Body a -> Body b -> Set ( Int, Int )
 collisionMap bodyA bodyB =
-    Tree.collisionMap
+    collisionMapRecurse
         (crossFunctions bodyA bodyB)
         bodyA.bounds
         bodyB.bounds
+        ( 0, 0 )
+        Set.empty
 
 
 crossFunctions : Body a -> Body b -> CrossFunctions BoundingBox Face BoundingBox Face
@@ -88,6 +80,87 @@ crossFunctions bodyA bodyB =
         , nodeLeaf = boxFaceCollide
         , leafNode = faceBoxCollide
         }
+
+
+type alias CrossFunctions a b c d =
+    { nodeNode : a -> c -> Bool
+    , leafLeaf : b -> d -> Bool
+    , nodeLeaf : a -> d -> Bool
+    , leafNode : b -> c -> Bool
+    }
+
+
+collideRecurse : CrossFunctions a b c d -> Tree a b -> Tree c d -> Bool
+collideRecurse xf a b =
+    let
+        recurse =
+            collideRecurse xf
+    in
+        case ( a, b ) of
+            ( Leaf aVal, Leaf bVal ) ->
+                xf.leafLeaf aVal bVal
+
+            ( Leaf aVal, Node bVal bFst bSnd ) ->
+                xf.leafNode aVal bVal
+                    && (recurse a bFst || recurse a bSnd)
+
+            ( Node aVal aFst aSnd, Leaf bVal ) ->
+                xf.nodeLeaf aVal bVal
+                    && (recurse aFst b || recurse aSnd b)
+
+            ( Node aVal aFst aSnd, Node bVal bFst bSnd ) ->
+                xf.nodeNode aVal bVal
+                    && (recurse aFst bFst
+                            || recurse aFst bSnd
+                            || recurse aSnd bFst
+                            || recurse aSnd bSnd
+                       )
+
+
+collisionMapRecurse : CrossFunctions a b c d -> Tree a b -> Tree c d -> ( Int, Int ) -> Set ( Int, Int ) -> Set ( Int, Int )
+collisionMapRecurse xf a b coords hits =
+    let
+        recurse =
+            collisionMapRecurse xf
+
+        toTheLeft =
+            Tree.toTheLeft coords
+
+        toTheRight =
+            Tree.toTheRight coords
+    in
+        case ( a, b ) of
+            ( Leaf aVal, Leaf bVal ) ->
+                if xf.leafLeaf aVal bVal then
+                    Set.insert coords hits
+                else
+                    hits
+
+            ( Leaf aVal, Node bVal bLeft bRight ) ->
+                if xf.leafNode aVal bVal then
+                    hits
+                        |> recurse a bLeft coords
+                        |> recurse a bRight coords
+                else
+                    hits
+
+            ( Node aVal aLeft aRight, Leaf bVal ) ->
+                if xf.nodeLeaf aVal bVal then
+                    Set.insert coords hits
+                        |> recurse aLeft b toTheLeft
+                        |> recurse aRight b toTheRight
+                else
+                    hits
+
+            ( Node aVal aLeft aRight, Node bVal bLeft bRight ) ->
+                if xf.nodeNode aVal bVal then
+                    Set.insert coords hits
+                        |> recurse aLeft bLeft toTheLeft
+                        |> recurse aLeft bRight toTheLeft
+                        |> recurse aRight bLeft toTheRight
+                        |> recurse aRight bRight toTheRight
+                else
+                    hits
 
 
 empty : OBBTree
@@ -229,3 +302,41 @@ simpleSplit whole =
                         transfer (n - 1) ( x :: firstHalf, xs )
     in
         transfer (List.length whole // 2) ( [], whole )
+
+
+encode : OBBTree -> Value
+encode tree =
+    case tree of
+        Leaf a ->
+            Encode.object
+                [ ( "nodeType", Encode.string "leaf" )
+                , ( "value", Face.encode a )
+                ]
+
+        Node a left right ->
+            Encode.object
+                [ ( "nodeType", Encode.string "internal" )
+                , ( "value", BoundingBox.encode a )
+                , ( "left", encode left )
+                , ( "right", encode right )
+                ]
+
+
+decode : Decoder OBBTree
+decode =
+    let
+        treeData nodeType =
+            case nodeType of
+                "leaf" ->
+                    Decode.object1 Leaf ("value" := Face.decode)
+
+                "internal" ->
+                    Decode.object3 Node
+                        ("value" := BoundingBox.decode)
+                        ("left" := decode)
+                        ("right" := decode)
+
+                _ ->
+                    Decode.fail ("unrecognized node type: " ++ nodeType)
+    in
+        Decode.andThen ("nodeType" := Decode.string) treeData
