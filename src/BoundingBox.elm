@@ -214,7 +214,7 @@ create faces =
 
         hullPoints =
             List.concatMap Face.vertexList hull
-                |> Vector.unique
+                |> Hull.unique
 
         facts =
             List.map Face.getFacts hull
@@ -241,8 +241,7 @@ create faces =
                 |> Covariance.eigenbasis
 
         orientation =
-            Quaternion.fromBasis basis
-                |> Quaternion.conjugate
+            Quaternion.conjugate (Covariance.basisToQuaternion basis)
 
         xProj =
             projectOnto basis.x hullPoints

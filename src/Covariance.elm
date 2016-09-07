@@ -1,6 +1,7 @@
-module Covariance exposing (Covariance, Basis, eigenbasis, init, fromMesh)
+module Covariance exposing (Covariance, Basis, eigenbasis, init, fromMesh, basisToQuaternion)
 
 import Vector exposing (Vector)
+import Quaternion exposing (Quaternion)
 import Face exposing (Face)
 
 
@@ -238,3 +239,77 @@ transform (Covariance c) v =
     Vector.vector (c.xx * Vector.getX v + c.xy * Vector.getY v + c.xz * Vector.getZ v)
         (c.xy * Vector.getX v + c.yy * Vector.getY v + c.yz * Vector.getZ v)
         (c.xz * Vector.getX v + c.yz * Vector.getY v + c.zz * Vector.getZ v)
+
+
+basisToQuaternion : Basis -> Quaternion
+basisToQuaternion basis =
+    let
+        diagX =
+            Vector.getX basis.x
+
+        diagY =
+            Vector.getY basis.y
+
+        diagZ =
+            Vector.getZ basis.z
+
+        pairXY =
+            ( Vector.getX basis.y, Vector.getY basis.x )
+
+        pairYZ =
+            ( Vector.getY basis.z, Vector.getZ basis.y )
+
+        pairZX =
+            ( Vector.getZ basis.x, Vector.getX basis.z )
+
+        trace =
+            diagX + diagY + diagZ
+
+        maxDiag =
+            max (max diagX diagY) diagZ
+
+        normalAdd denominator pair =
+            (uncurry (+) pair) / denominator
+
+        normalSub denominator pair =
+            (uncurry (-) pair) / denominator
+
+        doubleSqrt =
+            max 0 >> sqrt >> (*) 2
+    in
+        if trace > 0 then
+            let
+                s =
+                    doubleSqrt (trace + 1)
+            in
+                Quaternion.quaternion (s / 4)
+                    (normalSub s pairYZ)
+                    (normalSub s pairZX)
+                    (normalSub s pairXY)
+        else if maxDiag == diagX then
+            let
+                s =
+                    doubleSqrt (1 + diagX - diagY - diagZ)
+            in
+                Quaternion.quaternion (normalSub s pairYZ)
+                    (s / 4)
+                    (normalAdd s pairXY)
+                    (normalAdd s pairZX)
+        else if maxDiag == diagY then
+            let
+                s =
+                    doubleSqrt (1 - diagX + diagY - diagZ)
+            in
+                Quaternion.quaternion (normalSub s pairZX)
+                    (normalAdd s pairXY)
+                    (s / 4)
+                    (normalAdd s pairYZ)
+        else
+            let
+                s =
+                    doubleSqrt (1 - diagX - diagY + diagZ)
+            in
+                Quaternion.quaternion (normalSub s pairXY)
+                    (normalAdd s pairZX)
+                    (normalAdd s pairYZ)
+                    (s / 4)

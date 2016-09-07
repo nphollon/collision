@@ -1,6 +1,7 @@
-module Hull exposing (hull)
+module Hull exposing (hull, unique)
 
 import Dict exposing (Dict)
+import Set
 import Vector exposing (Vector)
 import Face exposing (Face)
 
@@ -26,7 +27,7 @@ hull : List Vector -> List Face
 hull points =
     let
         uniquePoints =
-            Vector.unique points
+            unique points
 
         sets =
             allocate (simplex uniquePoints) uniquePoints
@@ -104,10 +105,18 @@ hull2d face vantage points =
         projection =
             project (basis face vantage) vantage
     in
-        Vector.unique points
+        unique points
             |> List.map projection
             |> grahamScan
             |> List.map .original
+
+
+unique : List Vector -> List Vector
+unique points =
+    List.map Vector.toTuple points
+        |> Set.fromList
+        |> Set.toList
+        |> List.map Vector.fromTuple
 
 
 basis : Face -> Vector -> Basis

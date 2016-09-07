@@ -58,7 +58,6 @@ init =
                     { position = Vector.vector 0 1.6 -2
                     , orientation =
                         Quaternion.quaternion 0.85 0.35 0.35 0.15
-                            |> Quaternion.scale (1.010101)
                     }
                 , bounds = Mesh.byName shape
                 , hits = Set.empty

@@ -4,6 +4,7 @@ import ElmTest exposing (..)
 import Assertion exposing (..)
 import Covariance exposing (Basis)
 import Vector exposing (Vector)
+import Quaternion
 
 
 testSuite : Test
@@ -11,6 +12,7 @@ testSuite =
     suite "Eigenbasis for a real symmetric matrix"
         [ diagonalSuite
         , nonDiagonalSuite
+        , basisToOrientationSuite
         ]
 
 
@@ -75,3 +77,33 @@ assertBasisContains v basis =
             pass
         else
             fail ("Expected to find vector " ++ toString v ++ " in basis " ++ toString basis)
+
+
+basisToOrientationSuite : Test
+basisToOrientationSuite =
+    suite "converting an orthonormal basis to an axis-angle rotation"
+        [ test "Identity transformation" <|
+            assertEqualQuaternion
+                Quaternion.identity
+                (Covariance.basisToQuaternion
+                    { x = Vector.vector 1 0 0
+                    , y = Vector.vector 0 1 0
+                    , z = Vector.vector 0 0 1
+                    }
+                )
+        , test "180 degree rotation" <|
+            assertEqualQuaternion
+                (Quaternion.fromVector
+                    (Vector.vector
+                        (turns 0.5 / sqrt 2)
+                        (turns 0.5 / sqrt 2)
+                        0
+                    )
+                )
+                (Covariance.basisToQuaternion
+                    { x = Vector.vector 0 1 0
+                    , y = Vector.vector 1 0 0
+                    , z = Vector.vector 0 0 -1
+                    }
+                )
+        ]
