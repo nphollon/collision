@@ -82,9 +82,7 @@ type Action
     | BackToEntrance
     | SetPosition
     | ExtrinsicNudge
-    | IntrinsicNudge
     | ExtrinsicRotate
-    | IntrinsicRotate
     | ResetOrientation
     | SetShape Solid String
     | SelectNode Solid ( Int, Int )

@@ -163,8 +163,7 @@ positionControls =
         , inputField EditZ "Z "
         , Elements.spacer
         , button SetPosition "Set Position"
-        , button ExtrinsicNudge "Extrinsic Nudge"
-        , button IntrinsicNudge "Intrinsic Nudge"
+        , button ExtrinsicNudge "Nudge"
         ]
 
 
@@ -190,8 +189,7 @@ orientationControls =
                 , ( "z", "Z Axis" )
                 ]
             , Elements.spacer
-            , button ExtrinsicRotate "Extrinsic Rotate"
-            , button IntrinsicRotate "Intrinsic Rotate"
+            , button ExtrinsicRotate "Rotate"
             , button ResetOrientation "Reset"
             ]
 

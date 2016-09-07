@@ -135,21 +135,9 @@ update action model =
                 fields
                 model
 
-        ( IntrinsicNudge, PositionEditor fields ) ->
-            updateFrame
-                (parseVector >> Frame.intrinsicNudge)
-                fields
-                model
-
         ( ExtrinsicRotate, OrientationEditor fields ) ->
             updateFrame
                 (parseRotation >> Frame.extrinsicRotate)
-                fields
-                model
-
-        ( IntrinsicRotate, OrientationEditor fields ) ->
-            updateFrame
-                (parseRotation >> Frame.intrinsicRotate)
                 fields
                 model
 
