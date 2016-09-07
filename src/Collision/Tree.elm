@@ -2,6 +2,8 @@ module Collision.Tree exposing (Tree(..), leaves, internals, depth, subtreeAt, t
 
 {-| This module defines the tree structure used in the `Bounds` type. You don't need to import this module if you are just doing collision detection. But you may find it useful for debugging.
 
+We identify nodes in the tree using a two-dimensional coordinate system. The first coordinate measures distance from the root node. The second coordinate measures how far "from the left" the node is. So the root node is at (0,0), its two children are (1,0) and (1,1), their children are (2,0) through (2,3), and so on.
+
 # Definition
 
 @docs Tree
