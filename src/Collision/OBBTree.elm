@@ -1,4 +1,4 @@
-module Collision.OBBTree exposing (OBBTree, Body, collide, create, empty, projectAndSplit, encode, decode, collisionMap, collideRecurse)
+module Collision.OBBTree exposing (OBBTree, Body, collide, create, empty, projectAndSplit, encode, decode, collisionMap)
 
 import Set exposing (Set)
 import Json.Encode as Encode exposing (Value)
@@ -40,7 +40,7 @@ collisionMap bodyA bodyB =
         Set.empty
 
 
-crossFunctions : Body a -> Body b -> CrossFunctions BoundingBox Face BoundingBox Face
+crossFunctions : Body a -> Body b -> CrossFunctions
 crossFunctions bodyA bodyB =
     let
         transformAFace =
@@ -82,15 +82,15 @@ crossFunctions bodyA bodyB =
         }
 
 
-type alias CrossFunctions a b c d =
-    { nodeNode : a -> c -> Bool
-    , leafLeaf : b -> d -> Bool
-    , nodeLeaf : a -> d -> Bool
-    , leafNode : b -> c -> Bool
+type alias CrossFunctions =
+    { nodeNode : BoundingBox -> BoundingBox -> Bool
+    , leafLeaf : Face -> Face -> Bool
+    , nodeLeaf : BoundingBox -> Face -> Bool
+    , leafNode : Face -> BoundingBox -> Bool
     }
 
 
-collideRecurse : CrossFunctions a b c d -> Tree a b -> Tree c d -> Bool
+collideRecurse : CrossFunctions -> OBBTree -> OBBTree -> Bool
 collideRecurse xf a b =
     let
         recurse =
@@ -109,15 +109,21 @@ collideRecurse xf a b =
                     && (recurse aFst b || recurse aSnd b)
 
             ( Node aVal aFst aSnd, Node bVal bFst bSnd ) ->
-                xf.nodeNode aVal bVal
-                    && (recurse aFst bFst
-                            || recurse aFst bSnd
-                            || recurse aSnd bFst
-                            || recurse aSnd bSnd
-                       )
+                if xf.nodeNode aVal bVal then
+                    if octantVolume aVal > octantVolume bVal then
+                        (recurse aFst b) || (recurse aSnd b)
+                    else
+                        (recurse a bFst) || (recurse a bSnd)
+                else
+                    False
 
 
-collisionMapRecurse : CrossFunctions a b c d -> Tree a b -> Tree c d -> ( Int, Int ) -> Set ( Int, Int ) -> Set ( Int, Int )
+octantVolume : BoundingBox -> Float
+octantVolume box =
+    box.a * box.b * box.c
+
+
+collisionMapRecurse : CrossFunctions -> OBBTree -> OBBTree -> ( Int, Int ) -> Set ( Int, Int ) -> Set ( Int, Int )
 collisionMapRecurse xf a b coords hits =
     let
         recurse =

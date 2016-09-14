@@ -24,68 +24,139 @@ testSuite =
 collisionRecursionSuite : Test
 collisionRecursionSuite =
     let
-        xf =
-            { nodeNode = (==)
-            , leafLeaf = (==)
-            , nodeLeaf = flip List.member
-            , leafNode = List.member
-            }
+        collide a b =
+            OBBTree.collide
+                { bounds = a
+                , frame = Frame.identity
+                }
+                { bounds = b
+                , frame = Frame.identity
+                }
 
         assertHit a b =
-            assertEqual True (OBBTree.collideRecurse xf a b)
+            assertEqual True (collide a b && collide b a)
 
         assertMiss a b =
-            assertEqual False (OBBTree.collideRecurse xf a b)
+            assertEqual False (collide a b || collide b a)
+
+        horzFace ( a, b ) ( c, d ) =
+            Leaf
+                { p = Vector.vector a b 0
+                , q = Vector.vector c d 0
+                , r = Vector.vector a d 0
+                }
+
+        vertFace ( a, b ) ( c, d ) =
+            Leaf
+                { p = Vector.vector 0 a b
+                , q = Vector.vector 0 c d
+                , r = Vector.vector 0 a d
+                }
+
+        box ( a, b ) =
+            Node
+                { a = 5
+                , b = 5
+                , c = 1
+                , frame =
+                    { position = Vector.vector a b 0
+                    , orientation = Quaternion.identity
+                    }
+                }
     in
         suite "recursive condition checking"
-            [ test "non-colliding leafs do not collide" <|
-                assertMiss (Leaf 1)
-                    (Leaf 2)
-            , test "colliding leafs collide" <|
-                assertHit (Leaf 1)
-                    (Leaf 1)
-            , test "false if leaf collides with node but not children" <|
-                assertMiss (Leaf 1)
-                    (Node [ 1 ] (Leaf 2) (Leaf 3))
-            , test "true if leaf collides with node and the first child" <|
-                assertHit (Leaf 1)
-                    (Node [ 1 ] (Leaf 1) (Leaf 3))
-            , test "true if leaf collides with node and the second child" <|
-                assertHit (Leaf 1)
-                    (Node [ 1 ] (Leaf 3) (Leaf 1))
-            , test "false if leaf collides with children but not node" <|
-                assertMiss (Leaf 1)
-                    (Node [ 2 ] (Leaf 1) (Leaf 2))
-            , test "false if node but not children collide with leaf" <|
-                assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
-                    (Leaf 1)
-            , test "true if node and first child collide with leaf" <|
-                assertHit (Node [ 1 ] (Leaf 1) (Leaf 3))
-                    (Leaf 1)
-            , test "true if node and second child collide with leaf" <|
-                assertHit (Node [ 1 ] (Leaf 3) (Leaf 1))
-                    (Leaf 1)
-            , test "false if children but not node collide with leaf" <|
-                assertMiss (Node [ 2 ] (Leaf 1) (Leaf 3))
-                    (Leaf 1)
-            , test "false if nodes but no children collide" <|
-                assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
-                    (Node [ 1 ] (Leaf 4) (Leaf 5))
-            , test "false if children but not nodes collide" <|
-                assertMiss (Node [ 1 ] (Leaf 2) (Leaf 3))
-                    (Node [ 4 ] (Leaf 2) (Leaf 3))
-            , test "true if first children collide" <|
-                assertHit (Node [ 1 ] (Leaf 2) (Leaf 3))
-                    (Node [ 1 ] (Leaf 2) (Leaf 4))
-            , test "true if first child collides with second child" <|
-                assertHit (Node [ 1 ] (Leaf 2) (Leaf 3))
-                    (Node [ 1 ] (Leaf 4) (Leaf 2))
-            , test "true if second child collides with first child" <|
-                assertHit (Node [ 1 ] (Leaf 2) (Leaf 3))
-                    (Node [ 1 ] (Leaf 3) (Leaf 4))
-            , test "true if second children collide" <|
-                assertHit (Node [ 1 ] (Leaf 2) (Leaf 3))
-                    (Node [ 1 ] (Leaf 4) (Leaf 3))
+            [ suite "leaf-leaf collisions"
+                [ test "non-colliding leafs do not collide" <|
+                    assertMiss
+                        (horzFace ( 1, 1 ) ( 2, 2 ))
+                        (vertFace ( -1, 0 ) ( -2, 1 ))
+                , test "colliding leafs collide" <|
+                    assertHit
+                        (horzFace ( -1, -1 ) ( 1, 1 ))
+                        (vertFace ( 1, -1 ) ( -1, 1 ))
+                ]
+            , suite "leaf-node collisions"
+                [ test "miss if leaf collides with just node" <|
+                    assertMiss
+                        (horzFace ( 1, 1 ) ( 2, 2 ))
+                        (box ( 0, 0 )
+                            (vertFace ( 0, 0 ) ( 1, 1 ))
+                            (vertFace ( 0, 0 ) ( 1, 1 ))
+                        )
+                , test "hit if leaf collide with node and left child" <|
+                    assertHit
+                        (horzFace ( -1, -1 ) ( 1, 1 ))
+                        (box ( 0, 0 )
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                            (vertFace ( -1, -1 ) ( 0, 3 ))
+                        )
+                , test "hit if leaf collide with node and right child" <|
+                    assertHit
+                        (horzFace ( -1, -1 ) ( 1, 1 ))
+                        (box ( 0, 0 )
+                            (vertFace ( -1, -1 ) ( 0, 3 ))
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                        )
+                , test "miss if leaf just collides with children" <|
+                    assertMiss
+                        (horzFace ( -1, -1 ) ( 1, 1 ))
+                        (box ( -100, 0 )
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                        )
+                ]
+            , suite "node-node collisions"
+                [ test "false if nodes but no children collide" <|
+                    assertMiss
+                        (box ( 1, 1 )
+                            (horzFace ( 10, 10 ) ( 11, 11 ))
+                            (horzFace ( 12, 12 ) ( 13, 13 ))
+                        )
+                        (box ( -1, 1 )
+                            (vertFace ( -10, 10 ) ( -11, 11 ))
+                            (vertFace ( -12, 12 ) ( -13, 13 ))
+                        )
+                , test "false if children but not nodes collide" <|
+                    assertMiss
+                        (box ( -100, 0 )
+                            (horzFace ( -1, -1 ) ( 1, 1 ))
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                        )
+                        (box ( 100, 0 )
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                            (horzFace ( -1, -1 ) ( 1, 1 ))
+                        )
+                , test "true if left children collide" <|
+                    assertHit
+                        (box ( 1, 1 )
+                            (horzFace ( -1, -1 ) ( 1, 1 ))
+                            (horzFace ( 12, 12 ) ( 13, 13 ))
+                        )
+                        (box ( -1, 1 )
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                            (vertFace ( -12, 12 ) ( -13, 13 ))
+                        )
+                , test "true if left child collides with right child" <|
+                    assertHit
+                        (box ( 1, 1 )
+                            (horzFace ( -1, -1 ) ( 1, 1 ))
+                            (horzFace ( 12, 12 ) ( 13, 13 ))
+                        )
+                        (box ( -1, 1 )
+                            (vertFace ( -12, 12 ) ( -13, 13 ))
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                        )
+                , test "true if right children collide" <|
+                    assertHit
+                        (box ( 1, 1 )
+                            (horzFace ( 12, 12 ) ( 13, 13 ))
+                            (horzFace ( -1, -1 ) ( 1, 1 ))
+                        )
+                        (box ( -1, 1 )
+                            (vertFace ( -12, 12 ) ( -13, 13 ))
+                            (vertFace ( 1, -1 ) ( -1, 1 ))
+                        )
+                ]
             ]
 
 
