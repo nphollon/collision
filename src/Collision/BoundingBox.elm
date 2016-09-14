@@ -47,6 +47,14 @@ collideWithFace face box =
         transformedFace =
             Face.transformInto box.frame face
 
+        center =
+            Face.center transformedFace
+
+        isInside =
+            (abs center.x < box.a)
+                && (abs center.y < box.b)
+                && (abs center.z < box.c)
+
         ppp =
             Vector.vector box.a box.b box.c
 
@@ -70,21 +78,24 @@ collideWithFace face box =
 
         mmm =
             Vector.vector -box.a -box.b -box.c
+
+        boxFaces =
+            [ Face.face ppp pmp pmm
+            , Face.face pmm ppm ppp
+            , Face.face mmm mmp mpp
+            , Face.face mpp mpm mmm
+            , Face.face ppp ppm mpm
+            , Face.face mpm mpp ppp
+            , Face.face mmm pmm pmp
+            , Face.face pmp mmp mmm
+            , Face.face ppp mpp mmp
+            , Face.face mmp pmp ppp
+            , Face.face mmm mpm ppm
+            , Face.face ppm pmm mmm
+            ]
     in
-        [ Face.face ppp pmp pmm
-        , Face.face pmm ppm ppp
-        , Face.face mmm mmp mpp
-        , Face.face mpp mpm mmm
-        , Face.face ppp ppm mpm
-        , Face.face mpm mpp ppp
-        , Face.face mmm pmm pmp
-        , Face.face pmp mmp mmm
-        , Face.face ppp mpp mmp
-        , Face.face mmp pmp ppp
-        , Face.face mmm mpm ppm
-        , Face.face ppm pmm mmm
-        ]
-            |> List.any (Face.collide transformedFace)
+        isInside
+            || List.any (Face.collide transformedFace) boxFaces
 
 
 collide : BoundingBox -> BoundingBox -> Bool

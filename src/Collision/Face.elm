@@ -1,4 +1,4 @@
-module Collision.Face exposing (Face, FaceFacts, face, getFacts, vertexList, vertexTuple, cross, collide, encode, decode, transformInto, transformOutOf)
+module Collision.Face exposing (Face, FaceFacts, face, getFacts, center, vertexList, vertexTuple, cross, collide, encode, decode, transformInto, transformOutOf)
 
 import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode exposing (Decoder, (:=))
@@ -49,16 +49,18 @@ getFacts face =
     let
         area =
             0.5 * (Vector.length (cross face))
-
-        center =
-            Vector.add face.p face.q
-                |> Vector.add face.r
-                |> Vector.scale (1 / 3)
     in
         { face = face
         , area = area
-        , center = center
+        , center = center face
         }
+
+
+center : Face -> Vector
+center face =
+    Vector.add face.p face.q
+        |> Vector.add face.r
+        |> Vector.scale (1 / 3)
 
 
 encode : Face -> Value

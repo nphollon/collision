@@ -91,16 +91,17 @@ cube =
 collideWithBoxSuite : Test
 collideWithBoxSuite =
     let
-        assertCollide v =
-            assertEqual True
-                (BoundingBox.collide boxA (setPosition v boxB))
-
         assertMiss v =
-            (assertEqual False) (BoundingBox.collide boxA (setPosition v boxB))
+            assertEqual False
+                (BoundingBox.collide boxA (setPosition v boxB))
     in
         suite "Collsion between oriented bounding boxes"
             [ test "concentric boxes collide" <|
-                assertCollide (Vector.vector 0 0 0)
+                assertEqual True
+                    (BoundingBox.collide boxA boxB)
+            , test "nested boxes collide" <|
+                assertEqual True
+                    (BoundingBox.collide boxA littleBox)
             , suite "no collision on face axis projections"
                 [ test "A major axis" <|
                     assertMiss (Vector.vector 6.7 0 0)
@@ -171,8 +172,8 @@ collideWithFaceSuite =
                 }
     in
         suite "Collision between oriented bounding box and triangular face"
-            [ test "no collision when box encloses triangle" <|
-                assertEqual False
+            [ test "collision when box encloses triangle" <|
+                assertEqual True
                     (collideWithFace boxA)
             , test "collision with +A box face" <|
                 assertEqual True
@@ -208,6 +209,15 @@ boxA =
     { a = 3
     , b = 2
     , c = 1
+    , frame = Frame.identity
+    }
+
+
+littleBox : BoundingBox
+littleBox =
+    { a = 0.5
+    , b = 0.5
+    , c = 0.5
     , frame = Frame.identity
     }
 
