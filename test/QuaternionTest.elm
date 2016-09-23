@@ -10,7 +10,7 @@ testSuite : Test
 testSuite =
     suite "Geometric transformations"
         [ rotationForSuite
-        , rotateVectorSuite
+        , rotateSuite
         ]
 
 
@@ -29,12 +29,12 @@ rotationForSuite =
         ]
 
 
-rotateVectorSuite : Test
-rotateVectorSuite =
+rotateSuite : Test
+rotateSuite =
     suite "Rotating a vector by a quaternion"
         [ test "rotate x axis ninety degrees on z axis gives y axis" <|
             assertEqualVector (Vec.vector 0 1 0)
-                (rotateVector (fromVector (Vec.vector 0 0 (turns 0.25)))
+                (rotate (fromVector (Vec.vector 0 0 (turns 0.25)))
                     (Vec.vector 1 0 0)
                 )
         ]

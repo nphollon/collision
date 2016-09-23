@@ -101,21 +101,28 @@ collideWithFace face box =
 collide : BoundingBox -> BoundingBox -> Bool
 collide boxA boxB =
     let
+        frame =
+            Frame.mul boxB.frame (Frame.inverse boxA.frame)
+
         t =
-            Frame.transformInto boxA.frame boxB.frame.position
+            frame.position
 
         rotation =
-            Quaternion.conjugate boxA.frame.orientation
-                |> Quaternion.compose boxB.frame.orientation
+            frame.orientation
 
+        {-
+           rotation =
+               Quaternion.conjugate boxA.frame.orientation
+                   |> Quaternion.compose boxB.frame.orientation
+        -}
         r1 =
-            Quaternion.rotateVector rotation (Vector.vector 1 0 0)
+            Quaternion.rotate rotation (Vector.vector 1 0 0)
 
         r2 =
-            Quaternion.rotateVector rotation (Vector.vector 0 1 0)
+            Quaternion.rotate rotation (Vector.vector 0 1 0)
 
         r3 =
-            Quaternion.rotateVector rotation (Vector.vector 0 0 1)
+            Quaternion.rotate rotation (Vector.vector 0 0 1)
 
         r =
             { a11 = abs (Vector.getX r1)
@@ -265,7 +272,7 @@ create faces =
 
         position =
             Vector.vector xProj.center yProj.center zProj.center
-                |> Quaternion.rotateVector orientation
+                |> Quaternion.rotate orientation
     in
         { a = xProj.radius
         , b = yProj.radius

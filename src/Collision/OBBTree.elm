@@ -202,7 +202,7 @@ partitionFaces : BoundingBox -> List Face -> ( List Face, List Face )
 partitionFaces box faces =
     let
         transform =
-            Quaternion.rotateVector box.frame.orientation
+            Quaternion.rotate box.frame.orientation
 
         basis =
             [ ( box.a, Vector.xAxis )

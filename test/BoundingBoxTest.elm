@@ -147,7 +147,7 @@ collideWithBoxSuite =
                     assertEqual True
                         (BoundingBox.collide
                             boxB
-                            (setPosition (Vector.vector 0 4 2.2) boxA)
+                            (setPosition (Vector.vector 0 2 1.2) boxA)
                         )
                 ]
             , suite "degenerate cases"
@@ -196,7 +196,7 @@ collideWithFaceSuite =
             , test "collision with rotated box" <|
                 assertEqual True
                     (collideWithFace
-                        (setOrientation (Quaternion.rotateX (turns 0.25)) boxA)
+                        (setOrientation (Quaternion.xRotation (turns 0.25)) boxA)
                     )
             , test "no collision when box away from triangle" <|
                 assertEqual False
@@ -225,15 +225,16 @@ littleBox =
 boxB : BoundingBox
 boxB =
     let
-        comp =
-            pi / 6 / sqrt 3
+        h =
+            2 - sqrt 3
     in
         { a = 3
         , b = 2
         , c = 1
         , frame =
             { position = Vector.identity
-            , orientation = Quaternion.fromVector (Vector.vector comp comp comp)
+            , orientation =
+                Quaternion.quaternion (sqrt 3) h h h
             }
         }
 

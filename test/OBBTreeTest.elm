@@ -205,17 +205,17 @@ centeredCollisionSuite =
                     (setPosition (Vector.vector 1 0 0) defaultBody)
             , test "unaligned bodies that do collide" <|
                 assertHit
-                    (setOrientation (Quaternion.rotateX (degrees -36.9)) defaultBody)
-                    (setOrientation (Quaternion.rotateY (degrees 20.8)) defaultBody)
+                    (setOrientation (Quaternion.xRotation (degrees -36.9)) defaultBody)
+                    (setOrientation (Quaternion.yRotation (degrees 20.8)) defaultBody)
             , test "unaligned bodies that do not collide" <|
                 assertMiss
                     (defaultBody
                         |> setPosition (Vector.vector 0 0 -2)
-                        |> setOrientation (Quaternion.rotateX (degrees -36.8))
+                        |> setOrientation (Quaternion.xRotation (degrees -36.8))
                     )
                     (defaultBody
                         |> setPosition (Vector.vector 0 0 2)
-                        |> setOrientation (Quaternion.rotateY (degrees 20.7))
+                        |> setOrientation (Quaternion.yRotation (degrees 20.7))
                     )
             ]
 
@@ -237,18 +237,18 @@ offCenterCollisionSuite =
             , c = 0.1
             , frame =
                 { position = Vector.vector 0 0 -10
-                , orientation = Quaternion.rotateY (degrees 45)
+                , orientation = Quaternion.yRotation (degrees 45)
                 }
             }
 
         aFrame =
             { position = Vector.vector 0 10 0
-            , orientation = Quaternion.rotateX (degrees -90)
+            , orientation = Quaternion.xRotation (degrees 90)
             }
 
         bFrame =
             { position = Vector.vector 10 0 0
-            , orientation = Quaternion.rotateY (degrees 90)
+            , orientation = Quaternion.yRotation (degrees -90)
             }
 
         leafTree =
