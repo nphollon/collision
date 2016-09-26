@@ -243,12 +243,12 @@ offCenterCollisionSuite =
 
         aFrame =
             { position = Vector.vector 0 10 0
-            , orientation = Quaternion.xRotation (degrees 90)
+            , orientation = Quaternion.xRotation (degrees -90)
             }
 
         bFrame =
             { position = Vector.vector 10 0 0
-            , orientation = Quaternion.yRotation (degrees -90)
+            , orientation = Quaternion.yRotation (degrees 90)
             }
 
         leafTree =
