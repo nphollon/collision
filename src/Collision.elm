@@ -35,7 +35,7 @@ import Collision.Face as Face
 import Collision.Tree exposing (Tree)
 
 
-{-| A triangle. The surface of your colliding objects is described by a collection of triangular faces.
+{-| A triangle. The surface of your colliding objects is described by a collection of triangular faces. The `Vector` type is defined in [nphollon/geo3d](package.elm-lang.org/packages/nphollon/geo3d/latest/Vector).
 -}
 type alias Face =
     { p : Vector
@@ -57,9 +57,9 @@ type alias Bounds =
     Tree BoundingBox Face
 
 
-{-| An object that is positioned and oriented in three-dimensional space. The bounds of the object are given in the body's reference frame. Before testing for a collision, we use the position and orientation to move the bounds into the world's reference frame.
+{-| An object that is positioned and oriented in three-dimensional space. The bounds of the object are given in the body's reference frame. The `Frame` type is defined in [nphollon/geo3d](package.elm-lang.org/packages/nphollon/geo3d/latest/Frame).
 
-This way, we can move our objects through the world, but we don't have to re-compute the bounds (as long as the object does not change shape).
+Before testing for a collision, we use the position and orientation to move the bounds into the world's reference frame. This way, we can move our objects through the world, but we don't have to re-compute the bounds (as long as the object does not change shape).
 -}
 type alias Body a =
     { a
