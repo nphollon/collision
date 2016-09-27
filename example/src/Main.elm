@@ -1,7 +1,6 @@
 module Main exposing (main)
 
 import Set
-import String
 import Time exposing (Time)
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -100,52 +99,14 @@ update action model =
         ( BackToEntrance, _ ) ->
             beginTransition True Entrance model
 
-        ( EditX xText, PositionEditor fields ) ->
-            { model | room = PositionEditor { fields | xText = xText } }
-
-        ( EditY yText, PositionEditor fields ) ->
-            { model | room = PositionEditor { fields | yText = yText } }
-
-        ( EditZ zText, PositionEditor fields ) ->
-            { model | room = PositionEditor { fields | zText = zText } }
-
-        ( EditAngle angleText, OrientationEditor fields ) ->
-            { model
-                | room =
-                    OrientationEditor { fields | angleText = angleText }
-            }
-
-        ( SetAxis axis, OrientationEditor fields ) ->
-            { model
-                | room = OrientationEditor { fields | axis = axis }
-            }
-
         --
         -- Move the entities
         --
-        ( SetPosition, PositionEditor fields ) ->
-            updateFrame
-                (parseVector >> Frame.setPosition)
-                fields
-                model
+        ( ExtrinsicNudge v, PlacementEditor solid ) ->
+            updateFrame (Frame.extrinsicNudge v) solid model
 
-        ( ExtrinsicNudge, PositionEditor fields ) ->
-            updateFrame
-                (parseVector >> Frame.extrinsicNudge)
-                fields
-                model
-
-        ( ExtrinsicRotate, OrientationEditor fields ) ->
-            updateFrame
-                (parseRotation >> Frame.extrinsicRotate)
-                fields
-                model
-
-        ( ResetOrientation, OrientationEditor fields ) ->
-            updateFrame
-                (\_ -> Frame.setOrientation Quaternion.identity)
-                fields
-                model
+        ( ExtrinsicRotate q, PlacementEditor solid ) ->
+            updateFrame (Frame.extrinsicRotate q) solid model
 
         ( SetShape solid newShape, ShapeEditor ) ->
             updateEntity
@@ -184,11 +145,11 @@ type alias WithSolid a =
     { a | solid : Solid }
 
 
-updateFrame : (WithSolid a -> Frame -> Frame) -> WithSolid a -> Model -> Model
-updateFrame transform fields model =
+updateFrame : (Frame -> Frame) -> Solid -> Model -> Model
+updateFrame transform solid model =
     updateEntity
-        (\body -> { body | frame = transform fields body.frame })
-        fields.solid
+        (\body -> { body | frame = transform body.frame })
+        solid
         model
 
 
@@ -217,27 +178,6 @@ updateCollisionMap model =
             , blue = remap model.blue model.red
             , collision = Collision.collide model.red model.blue
         }
-
-
-parseVector : PositionFields -> Vector
-parseVector fields =
-    Vector.vector
-        (toFloat fields.xText)
-        (toFloat fields.yText)
-        (toFloat fields.zText)
-
-
-parseRotation : OrientationFields -> Quaternion
-parseRotation fields =
-    degrees (toFloat fields.angleText)
-        |> Quaternion.fromAxisAngle fields.axis
-        |> Maybe.withDefault Quaternion.identity
-
-
-toFloat : String -> Float
-toFloat text =
-    String.toFloat text
-        |> Result.withDefault 0
 
 
 beginTransition : Bool -> Room -> Model -> Model

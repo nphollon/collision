@@ -9,6 +9,7 @@ import Html.Events as Evt
 import InlineHover as Hov
 import Ease
 import Vector exposing (Vector)
+import Quaternion
 
 
 -- Collision Library
@@ -63,11 +64,11 @@ roomAppearance model room =
         Entrance ->
             ( Elements.title "Collision Test", entranceControls )
 
-        PositionEditor _ ->
-            ( Elements.title "Change Position", positionControls )
+        PlacementEditor Red ->
+            ( Elements.title "Move Red", placementControls )
 
-        OrientationEditor _ ->
-            ( Elements.title "Change Orientation", orientationControls )
+        PlacementEditor Blue ->
+            ( Elements.title "Move Blue", placementControls )
 
         ShapeEditor ->
             ( Elements.title "Change Shapes", shapeControls model )
@@ -125,73 +126,81 @@ offsetDiv fraction content =
 entranceControls : Html Action
 entranceControls =
     let
-        editPositionFor solid =
-            { xText = ""
-            , yText = ""
-            , zText = ""
-            , solid = solid
-            }
-                |> PositionEditor
-                |> ChangeRoom
-
-        editOrientationFor solid =
-            { angleText = ""
-            , axis = Vector.xAxis
-            , solid = solid
-            }
-                |> OrientationEditor
-                |> ChangeRoom
+        editPlacementFor =
+            PlacementEditor >> ChangeRoom
     in
         Html.div
             [ controlPanelStyle ]
-            [ button (editPositionFor Red) "Red Position"
-            , button (editOrientationFor Red) "Red Orientation"
-            , Elements.spacer
-            , button (editPositionFor Blue) "Blue Position"
-            , button (editOrientationFor Blue) "Blue Orientation"
-            , Elements.spacer
+            [ button (editPlacementFor Red) "Move Red"
+            , button (editPlacementFor Blue) "Move Blue"
             , button (ChangeRoom ShapeEditor) "Shapes"
             , button (ChangeRoom ViewEditor) "View Settings"
             ]
 
 
-positionControls : Html Action
-positionControls =
+placementControls : Html Action
+placementControls =
     submenu
-        [ inputField EditX "X "
-        , inputField EditY "Y "
-        , inputField EditZ "Z "
+        [ Html.text "Nudge"
+        , nudgeArray "X" (Vector.vector 1 0 0)
+        , nudgeArray "Y" (Vector.vector 0 1 0)
+        , nudgeArray "Z" (Vector.vector 0 0 -1)
         , Elements.spacer
-        , button SetPosition "Set Position"
-        , button ExtrinsicNudge "Nudge"
+        , Html.text "Rotate"
+        , turnArray "X" (Vector.vector -1 0 0)
+        , turnArray "Y" (Vector.vector 0 1 0)
+        , turnArray "Z" (Vector.vector 0 0 -1)
         ]
 
 
-orientationControls : Html Action
-orientationControls =
+nudgeArray : String -> Vector -> Html Action
+nudgeArray name unit =
     let
-        toAxis value =
-            if value == "y" then
-                SetAxis Vector.yAxis
-            else if value == "z" then
-                SetAxis Vector.zAxis
-            else
-                SetAxis Vector.xAxis
+        nudge x =
+            ExtrinsicNudge (Vector.scale x unit)
     in
-        submenu
-            [ inputField EditAngle "Angle (Degrees) "
-            , select
-                toAxis
-                True
-                "x"
-                [ ( "x", "X Axis" )
-                , ( "y", "Y Axis" )
-                , ( "z", "Z Axis" )
-                ]
-            , Elements.spacer
-            , button ExtrinsicRotate "Rotate"
-            , button ResetOrientation "Reset"
+        Html.span []
+            [ smallButton (nudge -1) "«"
+            , smallButton (nudge -0.1) "‹"
+            , Html.text name
+            , smallButton (nudge 0.1) "›"
+            , smallButton (nudge 1) "»"
             ]
+
+
+turnArray : String -> Vector -> Html Action
+turnArray name unit =
+    let
+        turn x =
+            { scalar = x / (2 - sqrt 3), vector = unit }
+                |> Quaternion.normalize
+                |> Maybe.withDefault Quaternion.identity
+                |> ExtrinsicRotate
+    in
+        Html.span []
+            [ smallButton (turn -1) "«"
+            , smallButton (turn -10) "‹"
+            , Html.text name
+            , smallButton (turn 10) "›"
+            , smallButton (turn 1) "»"
+            ]
+
+
+smallButton : msg -> String -> Html msg
+smallButton sendMsg label =
+    Hov.hover
+        [ ( "background-color", "#eeeeee" ) ]
+        Html.button
+        [ Evt.onClick sendMsg
+        , Attr.style
+            [ ( "background-color", "#ffffff" )
+            , ( "border", "none" )
+            , ( "font-size", "1rem" )
+            , ( "padding", "5px" )
+            , ( "margin", "5px" )
+            ]
+        ]
+        [ Html.text label ]
 
 
 shapeControls : Model -> Html Action

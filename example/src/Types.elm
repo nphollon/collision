@@ -3,6 +3,7 @@ module Types exposing (..)
 import Set exposing (Set)
 import Math.Vector3 exposing (Vec3)
 import Vector exposing (Vector)
+import Quaternion exposing (Quaternion)
 
 
 -- Collision Library
@@ -31,26 +32,10 @@ type alias Entity =
 
 type Room
     = Entrance
-    | PositionEditor PositionFields
-    | OrientationEditor OrientationFields
+    | PlacementEditor Solid
     | ShapeEditor
     | ViewEditor
     | Transition TransitionDetails
-
-
-type alias PositionFields =
-    { xText : String
-    , yText : String
-    , zText : String
-    , solid : Solid
-    }
-
-
-type alias OrientationFields =
-    { angleText : String
-    , axis : Vector
-    , solid : Solid
-    }
 
 
 type Solid
@@ -73,17 +58,10 @@ type alias Vertex =
 
 
 type Action
-    = EditX String
-    | EditY String
-    | EditZ String
-    | EditAngle String
-    | SetAxis Vector
-    | ChangeRoom Room
+    = ChangeRoom Room
     | BackToEntrance
-    | SetPosition
-    | ExtrinsicNudge
-    | ExtrinsicRotate
-    | ResetOrientation
+    | ExtrinsicNudge Vector
+    | ExtrinsicRotate Quaternion
     | SetShape Solid String
     | SelectNode Solid ( Int, Int )
     | CollisionsOnly Bool
