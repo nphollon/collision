@@ -1,7 +1,8 @@
 module HullTest exposing (testSuite)
 
 import String
-import ElmTest exposing (..)
+import Test exposing (..)
+import Expect exposing (..)
 import Vector exposing (Vector)
 import Collision.Face as Face exposing (Face)
 import Collision.Hull as Hull
@@ -9,24 +10,25 @@ import Collision.Hull as Hull
 
 testSuite : Test
 testSuite =
-    suite "Degenerate hulls"
+    describe "Degenerate hulls"
         [ test "If all points are equal, return empty hull" <|
-            assertEqual []
-                (Hull.hull
-                    [ Vector 1 2 3
-                    , Vector 1 2 3
-                    , Vector 1 2 3
-                    , Vector 1 2 3
-                    ]
-                )
-        , test "If all points are colinear, return the longest possible line segment"
-            colinearTest
-        , test "If all points are coplanar, return the 2D convex hull"
-            coplanarTest
+            \() ->
+                equal []
+                    (Hull.hull
+                        [ Vector 1 2 3
+                        , Vector 1 2 3
+                        , Vector 1 2 3
+                        , Vector 1 2 3
+                        ]
+                    )
+        , test "If all points are colinear, return the longest possible line segment" <|
+            \() -> colinearTest
+        , test "If all points are coplanar, return the 2D convex hull" <|
+            \() -> coplanarTest
         ]
 
 
-coplanarTest : Assertion
+coplanarTest : Expectation
 coplanarTest =
     let
         a =
@@ -41,11 +43,11 @@ coplanarTest =
         d =
             Vector 5 0 0
     in
-        assertEqual [ Face d b a, Face d c b ]
+        equal [ Face d b a, Face d c b ]
             (Hull.hull [ a, b, c, d ])
 
 
-colinearTest : Assertion
+colinearTest : Expectation
 colinearTest =
     let
         endA =

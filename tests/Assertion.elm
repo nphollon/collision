@@ -1,6 +1,6 @@
 module Assertion exposing (..)
 
-import ElmTest exposing (..)
+import Expect exposing (..)
 import Vector as Vec exposing (Vector)
 import Quaternion exposing (Quaternion)
 
@@ -17,7 +17,7 @@ equalVector a b =
 
 equalPair : ( Float, Float ) -> ( Float, Float ) -> Bool
 equalPair a b =
-    equalFloat (fst a) (fst b) && equalFloat (snd a) (snd b)
+    equalFloat (Tuple.first a) (Tuple.first b) && equalFloat (Tuple.second a) (Tuple.second b)
 
 
 equalQuaternion : Quaternion -> Quaternion -> Bool
@@ -25,39 +25,39 @@ equalQuaternion a b =
     (equalVector a.vector b.vector) && (equalFloat a.scalar b.scalar)
 
 
-assertEqualFloat : Float -> Float -> Assertion
+assertEqualFloat : Float -> Float -> Expectation
 assertEqualFloat a b =
     if equalFloat a b then
         pass
     else
-        assertEqual a b
+        equal a b
 
 
-assertEqualVector : Vector -> Vector -> Assertion
+assertEqualVector : Vector -> Vector -> Expectation
 assertEqualVector a b =
     if equalVector a b then
         pass
     else
-        assertEqual a b
+        equal a b
 
 
-assertEqualPair : ( Float, Float ) -> ( Float, Float ) -> Assertion
+assertEqualPair : ( Float, Float ) -> ( Float, Float ) -> Expectation
 assertEqualPair a b =
     if equalPair a b then
         pass
     else
-        assertEqual a b
+        equal a b
 
 
-assertEqualQuaternion : Quaternion -> Quaternion -> Assertion
+assertEqualQuaternion : Quaternion -> Quaternion -> Expectation
 assertEqualQuaternion a b =
     if equalQuaternion a b then
         pass
     else
-        assertEqual a b
+        equal a b
 
 
-assertListContents : List a -> List a -> Assertion
+assertListContents : List a -> List a -> Expectation
 assertListContents expected actual =
     let
         extra =
@@ -69,8 +69,8 @@ assertListContents expected actual =
         if List.isEmpty extra && List.isEmpty missing then
             pass
         else
-            fail
-                <| "Result list was missing "
-                ++ toString missing
-                ++ " and should not have contained "
-                ++ toString extra
+            fail <|
+                "Result list was missing "
+                    ++ toString missing
+                    ++ " and should not have contained "
+                    ++ toString extra

@@ -1,6 +1,7 @@
 module FaceTest exposing (..)
 
-import ElmTest exposing (..)
+import Test exposing (..)
+import Expect exposing (..)
 import Json.Decode as Decode
 import Collision.Face as Face exposing (Face)
 import Vector
@@ -8,7 +9,7 @@ import Vector
 
 testSuite : Test
 testSuite =
-    suite "Triangular faces"
+    describe "Triangular faces"
         [ intersectionSuite
         , jsonSuite
         ]
@@ -23,7 +24,7 @@ intersectionSuite =
             , r = Vector.vector 0 -1 0
             }
     in
-        suite "Face intersections"
+        describe "Face intersections"
             [ testIntersection "Triangles intersect if their edges pierce each other"
                 True
                 stationaryTriangle
@@ -57,7 +58,7 @@ intersectionSuite =
 
 testIntersection : String -> Bool -> Face -> Face -> Test
 testIntersection name shouldIntersect faceA faceB =
-    suite name
+    describe name
         [ testAllPermutations "triangles in given order" shouldIntersect faceA faceB
         , testAllPermutations "triangles in reverse order" shouldIntersect faceB faceA
         ]
@@ -69,7 +70,7 @@ testAllPermutations name shouldIntersect a b =
         subTest subName aPermuted =
             testBPermutations subName shouldIntersect aPermuted b
     in
-        suite name
+        describe name
             [ subTest "A: p q r" { p = a.p, q = a.q, r = a.r }
             , subTest "A: q r p" { p = a.q, q = a.r, r = a.p }
             , subTest "A: r p q" { p = a.r, q = a.p, r = a.q }
@@ -84,10 +85,11 @@ testBPermutations name shouldIntersect a b =
     let
         subTest subName bPermuted =
             test subName <|
-                assertEqual shouldIntersect
-                    (Face.collide a bPermuted)
+                \() ->
+                    equal shouldIntersect
+                        (Face.collide a bPermuted)
     in
-        suite name
+        describe name
             [ subTest "B: p q r" { p = b.p, q = b.q, r = b.r }
             , subTest "B: q r p" { p = b.q, q = b.r, r = b.p }
             , subTest "B: r p q" { p = b.r, q = b.p, r = b.q }
@@ -107,5 +109,6 @@ jsonSuite =
             }
     in
         test "Json encoding & decoding" <|
-            assertEqual (Ok face)
-                (Decode.decodeValue Face.decode (Face.encode face))
+            \() ->
+                equal (Ok face)
+                    (Decode.decodeValue Face.decode (Face.encode face))

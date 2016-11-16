@@ -260,7 +260,7 @@ allocate faces points =
                 ( { face = face, points = accepted } :: sets, rejected )
     in
         List.foldl getSetFor ( [], points ) faces
-            |> fst
+            |> Tuple.first
 
 
 {-| Returns true if point is "in front" of a face.
@@ -301,13 +301,13 @@ farthestFromBase face points =
             |> List.map (\point -> ( point, distanceFromBase face.p normal point ))
             |> List.foldl
                 (\a b ->
-                    if (snd b) < (snd a) then
+                    if (Tuple.second b) < (Tuple.second a) then
                         a
                     else
                         b
                 )
                 ( face.p, 0 )
-            |> fst
+            |> Tuple.first
 
 
 {-| Given a list of points, build a tetrahedron out of 4 extreme points.
@@ -334,11 +334,11 @@ simplex points =
                 List.foldl farther ( extremes.xMax, extremes.xMin ) extremeList
 
             base =
-                { p = fst baseLine
-                , q = snd baseLine
+                { p = Tuple.first baseLine
+                , q = Tuple.second baseLine
                 , r =
                     farthestFromLine baseLine points
-                        |> Maybe.withDefault (fst baseLine)
+                        |> Maybe.withDefault (Tuple.first baseLine)
                 }
 
             isColinear =
@@ -493,13 +493,13 @@ farthestFromLine ( a, b ) cs =
                 |> List.map (\c -> ( c, distanceFromLine a baseUnit c ))
                 |> List.foldl
                     (\c d ->
-                        if (snd d) < (snd c) then
+                        if (Tuple.second d) < (Tuple.second c) then
                             c
                         else
                             d
                     )
                     ( a, 0 )
-                |> fst
+                |> Tuple.first
                 |> Just
 
         Nothing ->

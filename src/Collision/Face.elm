@@ -1,7 +1,7 @@
 module Collision.Face exposing (Face, FaceFacts, face, getFacts, center, vertexList, vertexTuple, cross, collide, encode, decode, transformInto, transformOutOf)
 
 import Json.Encode as Encode exposing (Value)
-import Json.Decode as Decode exposing (Decoder, (:=))
+import Json.Decode as Decode exposing (Decoder)
 import Vector exposing (Vector)
 import Frame exposing (Frame)
 
@@ -74,10 +74,10 @@ encode face =
 
 decode : Decoder Face
 decode =
-    Decode.object3 face
-        ("p" := Vector.decode)
-        ("q" := Vector.decode)
-        ("r" := Vector.decode)
+    Decode.map3 face
+        (Decode.field "p" Vector.decode)
+        (Decode.field "q" Vector.decode)
+        (Decode.field "r" Vector.decode)
 
 
 vertexList : Face -> List Vector

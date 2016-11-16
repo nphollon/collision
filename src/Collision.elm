@@ -86,7 +86,7 @@ empty =
 
 {-| Determine whether two bodies collide.
 -}
-collide : Body b -> Body b' -> Bool
+collide : Body a -> Body b -> Bool
 collide =
     OBBTree.collide
 
@@ -125,6 +125,6 @@ Check out the Collision Visualizer to see this function in action.
 
 For more information about how the tree coordinates work, see `Collision.Tree`.
 -}
-collisionMap : Body b -> Body b' -> Set ( Int, Int )
+collisionMap : Body a -> Body b -> Set ( Int, Int )
 collisionMap =
     OBBTree.collisionMap

@@ -1,6 +1,7 @@
 module BoundingBoxTest exposing (testSuite)
 
-import ElmTest exposing (..)
+import Test exposing (..)
+import Expect exposing (..)
 import Assertion exposing (..)
 import Json.Decode as Decode
 import Vector exposing (Vector)
@@ -12,7 +13,7 @@ import Collision.BoundingBox as BoundingBox exposing (BoundingBox)
 
 testSuite : Test
 testSuite =
-    suite "Bounding box primitive"
+    describe "Bounding box primitive"
         [ creationSuite
         , collideWithBoxSuite
         , collideWithFaceSuite
@@ -26,23 +27,27 @@ creationSuite =
         bounds =
             BoundingBox.create cube
     in
-        suite "Creating a bounding box for a cube"
+        describe "Creating a bounding box for a cube"
             [ test "Centered at origin" <|
-                assertEqualVector
-                    (Vector.vector 0 0 0)
-                    bounds.frame.position
+                \() ->
+                    assertEqualVector
+                        (Vector.vector 0 0 0)
+                        bounds.frame.position
             , test "Major radius of 1" <|
-                assertEqualFloat
-                    3.6
-                    bounds.a
+                \() ->
+                    assertEqualFloat
+                        3.6
+                        bounds.a
             , test "Middle radius of 1" <|
-                assertEqualFloat
-                    3.6
-                    bounds.b
+                \() ->
+                    assertEqualFloat
+                        3.6
+                        bounds.b
             , test "Minor radius of 1" <|
-                assertEqualFloat
-                    3.6
-                    bounds.c
+                \() ->
+                    assertEqualFloat
+                        3.6
+                        bounds.c
             ]
 
 
@@ -92,17 +97,20 @@ collideWithBoxSuite : Test
 collideWithBoxSuite =
     let
         assertMiss v =
-            assertEqual False
-                (BoundingBox.collide boxA (setPosition v boxB))
+            \() ->
+                equal False
+                    (BoundingBox.collide boxA (setPosition v boxB))
     in
-        suite "Collsion between oriented bounding boxes"
+        describe "Collsion between oriented bounding boxes"
             [ test "concentric boxes collide" <|
-                assertEqual True
-                    (BoundingBox.collide boxA boxB)
+                \() ->
+                    equal True
+                        (BoundingBox.collide boxA boxB)
             , test "nested boxes collide" <|
-                assertEqual True
-                    (BoundingBox.collide boxA littleBox)
-            , suite "no collision on face axis projections"
+                \() ->
+                    equal True
+                        (BoundingBox.collide boxA littleBox)
+            , describe "no collision on face axis projections"
                 [ test "A major axis" <|
                     assertMiss (Vector.vector 6.7 0 0)
                 , test "A secondary axis" <|
@@ -116,7 +124,7 @@ collideWithBoxSuite =
                 , test "B minor axis" <|
                     assertMiss (Vector.vector 1.2 -1.2 3)
                 ]
-            , suite "no collision on edge-pair axis projections"
+            , describe "no collision on edge-pair axis projections"
                 [ test "A major x B major" <|
                     assertMiss (Vector.vector 0 4 3)
                 , test "A major x B middle" <|
@@ -136,27 +144,30 @@ collideWithBoxSuite =
                 , test "A minor x B minor" <|
                     assertMiss (Vector.vector 5.1 5 -1)
                 ]
-            , suite "Moving box A"
+            , describe "Moving box A"
                 [ test "collision with box A translated" <|
-                    assertEqual True
-                        (BoundingBox.collide
-                            (setPosition (Vector.vector 0.2 0.2 0.2) boxA)
-                            (setPosition (Vector.vector 5 4 2.2) boxB)
-                        )
+                    \() ->
+                        equal True
+                            (BoundingBox.collide
+                                (setPosition (Vector.vector 0.2 0.2 0.2) boxA)
+                                (setPosition (Vector.vector 5 4 2.2) boxB)
+                            )
                 , test "collision with box A rotated" <|
-                    assertEqual True
-                        (BoundingBox.collide
-                            boxB
-                            (setPosition (Vector.vector 0 2 1.2) boxA)
-                        )
+                    \() ->
+                        equal True
+                            (BoundingBox.collide
+                                boxB
+                                (setPosition (Vector.vector 0 2 1.2) boxA)
+                            )
                 ]
-            , suite "degenerate cases"
+            , describe "degenerate cases"
                 [ test "collision when boxes are aligned" <|
-                    assertEqual True
-                        (BoundingBox.collide
-                            (setPosition (Vector.vector 0 1 0) boxA)
-                            (setPosition (Vector.vector 0 -1 0) boxA)
-                        )
+                    \() ->
+                        equal True
+                            (BoundingBox.collide
+                                (setPosition (Vector.vector 0 1 0) boxA)
+                                (setPosition (Vector.vector 0 -1 0) boxA)
+                            )
                 ]
             ]
 
@@ -171,36 +182,45 @@ collideWithFaceSuite =
                 , r = Vector.vector 2.9 1.9 -0.9
                 }
     in
-        suite "Collision between oriented bounding box and triangular face"
+        describe "Collision between oriented bounding box and triangular face"
             [ test "collision when box encloses triangle" <|
-                assertEqual True
-                    (collideWithFace boxA)
+                \() ->
+                    equal True
+                        (collideWithFace boxA)
             , test "collision with +A box face" <|
-                assertEqual True
-                    (collideWithFace (setPosition (Vector.vector -0.2 0 0) boxA))
+                \() ->
+                    equal True
+                        (collideWithFace (setPosition (Vector.vector -0.2 0 0) boxA))
             , test "collision with -A box face" <|
-                assertEqual True
-                    (collideWithFace (setPosition (Vector.vector 0.2 0 0) boxA))
+                \() ->
+                    equal True
+                        (collideWithFace (setPosition (Vector.vector 0.2 0 0) boxA))
             , test "collision with +B box face" <|
-                assertEqual True
-                    (collideWithFace (setPosition (Vector.vector 0 -0.2 0) boxA))
+                \() ->
+                    equal True
+                        (collideWithFace (setPosition (Vector.vector 0 -0.2 0) boxA))
             , test "collision with -B box face" <|
-                assertEqual True
-                    (collideWithFace (setPosition (Vector.vector 0 0.2 0) boxA))
+                \() ->
+                    equal True
+                        (collideWithFace (setPosition (Vector.vector 0 0.2 0) boxA))
             , test "collision with +C box face" <|
-                assertEqual True
-                    (collideWithFace (setPosition (Vector.vector 0 0 -0.2) boxA))
+                \() ->
+                    equal True
+                        (collideWithFace (setPosition (Vector.vector 0 0 -0.2) boxA))
             , test "collision with -C box face" <|
-                assertEqual True
-                    (collideWithFace (setPosition (Vector.vector 0 0 0.2) boxA))
+                \() ->
+                    equal True
+                        (collideWithFace (setPosition (Vector.vector 0 0 0.2) boxA))
             , test "collision with rotated box" <|
-                assertEqual True
-                    (collideWithFace
-                        (setOrientation (Quaternion.xRotation (turns 0.25)) boxA)
-                    )
+                \() ->
+                    equal True
+                        (collideWithFace
+                            (setOrientation (Quaternion.xRotation (turns 0.25)) boxA)
+                        )
             , test "no collision when box away from triangle" <|
-                assertEqual False
-                    (collideWithFace (setPosition (Vector.vector 3.1 -2 0) boxA))
+                \() ->
+                    equal False
+                        (collideWithFace (setPosition (Vector.vector 3.1 -2 0) boxA))
             ]
 
 
@@ -263,5 +283,6 @@ jsonSuite =
             }
     in
         test "Json encoding & decoding" <|
-            assertEqual (Ok box)
-                (Decode.decodeValue BoundingBox.decode (BoundingBox.encode box))
+            \() ->
+                equal (Ok box)
+                    (Decode.decodeValue BoundingBox.decode (BoundingBox.encode box))

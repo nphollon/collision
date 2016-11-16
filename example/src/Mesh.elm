@@ -63,12 +63,12 @@ boxesWithFilters keepLeaf keepInternal tree =
         leaves =
             Tree.leaves tree
                 |> List.filter keepLeaf
-                |> List.map snd
+                |> List.map Tuple.second
 
         internals =
             Tree.internals tree
                 |> List.filter keepInternal
-                |> List.map snd
+                |> List.map Tuple.second
                 |> List.concatMap boxFaces
     in
         drawable (leaves ++ internals)

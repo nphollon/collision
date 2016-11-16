@@ -4,7 +4,6 @@ import Set exposing (Set)
 import String
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Html.App as App
 import Html.Events as Evt
 import InlineHover as Hov
 import Frame exposing (Frame)
@@ -37,10 +36,10 @@ draw model =
             [ Attr.style [ ( "width", "100%" ) ] ]
             [ Elements.title "Red"
             , Elements.divider
-            , App.map (SelectNode Red) (displayBody model.red)
+            , Html.map (SelectNode Red) (displayBody model.red)
             , Elements.title "Blue"
             , Elements.divider
-            , App.map (SelectNode Blue) (displayBody model.blue)
+            , Html.map (SelectNode Blue) (displayBody model.blue)
             ]
 
 

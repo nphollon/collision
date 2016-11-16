@@ -238,7 +238,7 @@ viewControls model =
                 (Tree.depth model.blue.bounds)
 
         treeLevels =
-            List.map (\i -> ( toString i, toString i )) [1..maxDepth]
+            List.map (\i -> ( toString i, toString i )) (List.range 1 maxDepth)
 
         setTreeLevel value =
             String.toInt value
@@ -278,7 +278,7 @@ checkbox sendMsg isChecked label =
             [ Attr.style [ ( "margin", "5px" ) ] ]
             [ Html.label [ Attr.for id ] [ Html.text label ]
             , Html.input
-                [ Attr.type' "checkbox"
+                [ Attr.type_ "checkbox"
                 , Attr.id id
                 , Attr.checked isChecked
                 , Evt.onCheck sendMsg

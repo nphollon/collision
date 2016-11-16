@@ -4,7 +4,6 @@ import Set
 import Time exposing (Time)
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Html.App as App
 import AnimationFrame
 import Frame exposing (Frame)
 import Quaternion exposing (Quaternion)
@@ -25,9 +24,9 @@ import DataView
 import Mesh
 
 
-main : Program Never
+main : Program Never Model Action
 main =
-    App.program
+    Html.program
         { init = init ! []
         , update = \action model -> update action model ! []
         , subscriptions = subscriptions

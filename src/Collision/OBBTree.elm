@@ -2,7 +2,7 @@ module Collision.OBBTree exposing (OBBTree, Body, collide, create, empty, projec
 
 import Set exposing (Set)
 import Json.Encode as Encode exposing (Value)
-import Json.Decode as Decode exposing (Decoder, (:=))
+import Json.Decode as Decode exposing (Decoder)
 import Frame exposing (Frame)
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
@@ -211,11 +211,11 @@ partitionFaces box faces =
             ]
 
         orderedBasis =
-            List.sortWith (\a b -> compare (fst b) (fst a))
+            List.sortWith (\a b -> compare (Tuple.first b) (Tuple.first a))
                 basis
 
         projections =
-            List.map (snd >> transform >> projectAndSplit)
+            List.map (Tuple.second >> transform >> projectAndSplit)
                 orderedBasis
     in
         List.map Face.getFacts faces
@@ -276,7 +276,7 @@ projectAndSplit axis factsList =
                 Just ( accumulated.firstHalf, accumulated.lastHalf )
     in
         List.map project factsList
-            |> List.sortBy fst
+            |> List.sortBy Tuple.first
             |> List.foldr addFace init
             |> returnValue
 
@@ -334,15 +334,17 @@ decode =
         treeData nodeType =
             case nodeType of
                 "leaf" ->
-                    Decode.object1 Leaf ("value" := Face.decode)
+                    Decode.field "value" Face.decode
+                        |> Decode.map Leaf
 
                 "internal" ->
-                    Decode.object3 Node
-                        ("value" := BoundingBox.decode)
-                        ("left" := decode)
-                        ("right" := decode)
+                    Decode.map3 Node
+                        (Decode.field "value" BoundingBox.decode)
+                        (Decode.field "left" decode)
+                        (Decode.field "right" decode)
 
                 _ ->
                     Decode.fail ("unrecognized node type: " ++ nodeType)
     in
-        Decode.andThen ("nodeType" := Decode.string) treeData
+        Decode.field "nodeType" Decode.string
+            |> Decode.andThen treeData

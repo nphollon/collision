@@ -1,7 +1,7 @@
 module Collision.BoundingBox exposing (BoundingBox, collide, collideWithFace, create, encode, decode)
 
 import Json.Encode as Encode exposing (Value)
-import Json.Decode as Decode exposing (Decoder, (:=))
+import Json.Decode as Decode exposing (Decoder)
 import Vector exposing (Vector)
 import Quaternion exposing (Quaternion)
 import Frame exposing (Frame)
@@ -31,13 +31,13 @@ encode box =
 
 decode : Decoder BoundingBox
 decode =
-    Decode.object4 BoundingBox
-        ("a" := Decode.float)
-        ("b" := Decode.float)
-        ("c" := Decode.float)
-        (Decode.object2 Frame
-            ("position" := Vector.decode)
-            ("orientation" := Quaternion.decode)
+    Decode.map4 BoundingBox
+        (Decode.field "a" Decode.float)
+        (Decode.field "b" Decode.float)
+        (Decode.field "c" Decode.float)
+        (Decode.map2 Frame
+            (Decode.field "position" Vector.decode)
+            (Decode.field "orientation" Quaternion.decode)
         )
 
 
